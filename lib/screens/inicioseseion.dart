@@ -158,9 +158,7 @@ class _InicioSesionState extends State<InicioSesion> {
                 Text('Inicia Sesión', style: Estilostextos.estilosTitulo),
                 const SizedBox(height: 16),
                 _campo('Nombre', Icons.person_outline, _nombre),
-                _campo('Correo', Icons.email, _correo,
-                    tipo: TextInputType.emailAddress,
-                    prefijo: Image.asset('assets/images/gmail2.webp', width: 20)),
+                _campo('Correo', Icons.email, _correo),
                 _campo('Contraseña', Icons.lock, _password, password: true),
                 TextButton(
                   onPressed: () {
@@ -182,7 +180,7 @@ class _InicioSesionState extends State<InicioSesion> {
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
                   onPressed: _iniciarConGoogle,
-                  icon: Image.asset('assets/images/google.png', width: 28, height: 28),
+                  icon: Image.asset('assets/images/google.png', width: 50, height: 28),//icono de google
                   label: const Text('Google'),
                 ),
                 const SizedBox(height: 16),

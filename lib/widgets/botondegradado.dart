@@ -24,7 +24,7 @@ class BotonDegradado extends StatelessWidget {
     required this.onPressed,
     this.cargando = false,
     this.icono,
-    this.ancho,
+    this.ancho = 300,// ancho fijo por defecto
     this.alto = 40,
     this.radio = 6,
   });
