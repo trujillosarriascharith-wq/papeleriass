@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/categoria_screen.dart';
 import '../theme/colores.dart';
 import '../theme/estilostextos.dart';
 
@@ -13,17 +14,39 @@ class CategoriaMenu {
 }
 
 /// ÚNICO lugar donde se definen las categorías y a dónde lleva cada una.
-/// Para conectar una pantalla, agrega el parámetro destino, por ejemplo:
-///   CategoriaMenu('Cuadernos', 'assets/images/cuadernos.png',
-///       destino: (_) => const PantallaCuadernos()),
-/// (no olvides importar la pantalla arriba en este archivo)
+/// Todas abren la misma pantalla (PantallaCategoria); solo cambian el título
+/// y el idCategoria, que debe ser el id_categoria de esa categoría en tu BD.
 final List<CategoriaMenu> categoriasApp = [
-  CategoriaMenu('Cuadernos', 'assets/images/cuadernos.png'),
-  CategoriaMenu('Colores', 'assets/images/colores.png'),
-  CategoriaMenu('Cartucheras', 'assets/images/cartucheras.png'),
-  CategoriaMenu('Temperas', 'assets/images/temperas.png'),
-  CategoriaMenu('Marcadores', 'assets/images/marcadores.jpg'),
-  CategoriaMenu('Pegamentos', 'assets/images/pegamentos.jpg'),
+  CategoriaMenu(
+    'Cuadernos',
+    'assets/images/cuadernos.png',
+    destino: (_) => const PantallaCategoria(titulo: 'Cuadernos', idCategoria: 1),
+  ),
+  CategoriaMenu(
+    'Colores',
+    'assets/images/colores.png',
+    destino: (_) => const PantallaCategoria(titulo: 'Colores', idCategoria: 2),
+  ),
+  CategoriaMenu(
+    'Cartucheras',
+    'assets/images/cartucheras.png',
+    destino: (_) => const PantallaCategoria(titulo: 'Cartucheras', idCategoria: 3),
+  ),
+  CategoriaMenu(
+    'Temperas',
+    'assets/images/temperas.png',
+    destino: (_) => const PantallaCategoria(titulo: 'Temperas', idCategoria: 4),
+  ),
+  CategoriaMenu(
+    'Marcadores',
+    'assets/images/marcadores.jpg',
+    destino: (_) => const PantallaCategoria(titulo: 'Marcadores', idCategoria: 5),
+  ),
+  CategoriaMenu(
+    'Pegamentos',
+    'assets/images/pegamentos.jpg',
+    destino: (_) => const PantallaCategoria(titulo: 'Pegamentos', idCategoria: 6),
+  ),
 ];
 
 /// Menú lateral reutilizable. Úsalo en cualquier pantalla:

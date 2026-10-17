@@ -12,7 +12,7 @@ import '../widgets/fondocurvo.dart';
 import '../widgets/fondodegradado.dart';
 import '../widgets/botondegradado.dart';
 import 'principal_clienet.dart';
-import 'admin_home.dart';
+import 'principal_admin.dart';
 
 
 class InicioSesion extends StatefulWidget {
@@ -69,18 +69,18 @@ class _InicioSesionState extends State<InicioSesion> {
   }
 
   void _irSegunRol(String? rol) {
-  debugPrint('ROL RECIBIDO: $rol');
+    debugPrint('ROL RECIBIDO: $rol');
 
-  final esAdmin = (rol ?? '').toLowerCase().startsWith('admin');
-  final Widget destino =
-      esAdmin ? const AdminHomeScreen() : const PrincipalClient();
+    final esAdmin = (rol ?? '').toLowerCase().startsWith('admin');
+    final Widget destino =
+        esAdmin ? const PrincipalAdmin() : const PrincipalClient();
 
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(builder: (_) => destino),
-    (_) => false,
-  );
-}
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => destino),
+      (_) => false,
+    );
+  }
 
   Future<void> _iniciarConGoogle() async {
     try {

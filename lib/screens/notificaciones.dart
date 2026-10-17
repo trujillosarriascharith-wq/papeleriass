@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:papelerias/screens/carrito_screen.dart';
+import 'package:papelerias/screens/contactenos.dart';
+import 'package:papelerias/screens/perfil_screen.dart';
 import '../theme/colores.dart';
 import '../theme/estilostextos.dart';
-import '../widgets/barrasuperior.dart';
+import '../widgets/BarraInferior.dart';
 import '../widgets/fondocurvo.dart';
+import '../widgets/menu_lateral.dart';
 import '../widgets/tarjetanotificacion.dart';
 import '../services/servicio_notificaciones.dart';
 
@@ -64,6 +68,36 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
     }
   }
 
+  // ---------- Navegación de la barra inferior ----------
+
+  // Vuelve a la pantalla principal del cliente
+  void _irAlInicio() {
+    Navigator.popUntil(context, (ruta) => ruta.isFirst);
+  }
+
+  void _abrirPerfil() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PerfilScreen()),
+    );
+  }
+
+  void _abrirCarrito() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PantallaCarrito()),
+    );
+  }
+
+  void _abrirContactenos() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PantallaContactenos()),
+    );
+  }
+
+  // ---------- Widgets ----------
+
   Widget _centro(String texto, {bool reintentar = false}) => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(texto, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54)),
@@ -119,29 +153,56 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
         child: ClipRRect(borderRadius: BorderRadius.circular(30), child: _lista()),
       );
 
+  // Fila superior: icono del menú lateral + título centrado
+  Widget _encabezado() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        children: [
+          Builder(
+            builder: (ctx) => IconButton(
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+              icon: const Icon(Icons.menu_rounded),
+              iconSize: 30,
+              color: Colors.black,
+              tooltip: 'Menú',
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'Notificaciones',
+              textAlign: TextAlign.center,
+              style: Estilostextos.estilosTitulo,
+            ),
+          ),
+          // Mismo ancho que el icono del menú para que el título quede centrado
+          const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.fondo,
+      drawer: const MenuLateral(),
       body: FondoCurvo(
         altoCurva: 340,
         child: SafeArea(
           child: Column(children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: BarraSuperior(
-                onInicio: () => Navigator.pop(context),
-                onPerfil: () {}, // TODO: ir a perfil
-                onCarrito: () {}, // TODO: ir al carrito
-                onNotificaciones: () {},
-                colorIconos: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('Notificaciones', style: Estilostextos.estilosTitulo),
+            const SizedBox(height: 4),
+            _encabezado(),
             Expanded(child: _panel()),
           ]),
         ),
+      ),
+      // Barra inferior: Inicio, Perfil, Carrito y Contáctenos
+      bottomNavigationBar: BarraInferior(
+        onInicio: _irAlInicio,
+        onPerfil: _abrirPerfil,
+        onCarrito: _abrirCarrito,
+        onContacto: _abrirContactenos,
       ),
     );
   }

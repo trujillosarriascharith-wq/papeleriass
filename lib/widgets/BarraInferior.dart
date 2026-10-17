@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 import '../theme/colores.dart';
 
-/// Barra inferior con degradado y dos accesos: Iniciar sesión y Contáctenos.
-/// Cada uno muestra su nombre y cambia de color al pasar el mouse
-/// (web/escritorio) o al mantenerlo presionado (celular).
+/// Barra inferior con degradado.
+/// Todos los accesos son opcionales: aparecen solo si se les pasa su función
+/// (Inicio, Iniciar sesión, Perfil, Notificaciones, Carrito y Contáctenos).
+/// Cada uno cambia de color al pasar el mouse (web/escritorio)
+/// o al mantenerlo presionado (celular).
 class BarraInferior extends StatelessWidget {
-  final VoidCallback onInicioSesion;
-  final VoidCallback onContacto;
+  final VoidCallback? onInicio;
+  final VoidCallback? onInicioSesion;
+  final VoidCallback? onPerfil;
+  final VoidCallback? onNotificaciones;
+  final VoidCallback? onCarrito;
+  final VoidCallback? onContacto;
 
   const BarraInferior({
     super.key,
-    required this.onInicioSesion,
-    required this.onContacto,
+    this.onInicio,
+    this.onInicioSesion,
+    this.onPerfil,
+    this.onNotificaciones,
+    this.onCarrito,
+    this.onContacto,
   });
 
   @override
@@ -20,7 +30,7 @@ class BarraInferior extends StatelessWidget {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      height: 68 + bottomInset, // alto de la barra (cambia el 68 si la quieres más alta o baja)
+      height: 68 + bottomInset, // alto de la barra
       padding: EdgeInsets.only(bottom: bottomInset),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -38,20 +48,54 @@ class BarraInferior extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: _ItemBarra(
-              icono: Icons.person_outline_rounded,
-              texto: 'Iniciar sesión',
-              onTap: onInicioSesion,
+          if (onInicio != null)
+            Expanded(
+              child: _ItemBarra(
+                icono: Icons.home_outlined,
+                texto: 'Inicio',
+                onTap: onInicio!,
+              ),
             ),
-          ),
-          Expanded(
-            child: _ItemBarra(
-              icono: Icons.storefront_outlined, // icono de la tienda / información de la papelería
-              texto: 'Contáctenos',
-              onTap: onContacto,
+          if (onInicioSesion != null)
+            Expanded(
+              child: _ItemBarra(
+                icono: Icons.login_rounded,
+                texto: 'Iniciar sesión',
+                onTap: onInicioSesion!,
+              ),
             ),
-          ),
+          if (onPerfil != null)
+            Expanded(
+              child: _ItemBarra(
+                icono: Icons.person_outline_rounded,
+                texto: 'Perfil',
+                onTap: onPerfil!,
+              ),
+            ),
+          if (onNotificaciones != null)
+            Expanded(
+              child: _ItemBarra(
+                icono: Icons.notifications_none_rounded,
+                texto: 'Notificaciones',
+                onTap: onNotificaciones!,
+              ),
+            ),
+          if (onCarrito != null)
+            Expanded(
+              child: _ItemBarra(
+                icono: Icons.shopping_cart_outlined,
+                texto: 'Carrito',
+                onTap: onCarrito!,
+              ),
+            ),
+          if (onContacto != null)
+            Expanded(
+              child: _ItemBarra(
+                icono: Icons.storefront_outlined,
+                texto: 'Contáctenos',
+                onTap: onContacto!,
+              ),
+            ),
         ],
       ),
     );
@@ -78,7 +122,6 @@ class _ItemBarraState extends State<_ItemBarra> {
   bool _hover = false;
   bool _presionado = false;
 
-  // Color normal y color cuando el mouse está encima / presionado
   static const Color _colorNormal = Colors.white;
   static const Color _colorActivo = Color(0xFFFCCB05); // amarillo (el mismo del chatbot)
 
