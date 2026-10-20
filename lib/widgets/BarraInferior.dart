@@ -1,18 +1,47 @@
 import 'package:flutter/material.dart';
 import '../theme/colores.dart';
+import '../screens/inicioseseion.dart'; 
 
 /// Barra inferior con degradado.
-/// Todos los accesos son opcionales: aparecen solo si se les pasa su función
-/// (Inicio, Iniciar sesión, Perfil, Notificaciones, Carrito y Contáctenos).
-/// Cada uno cambia de color al pasar el mouse (web/escritorio)
-/// o al mantenerlo presionado (celular).
+///
+/// Mantiene la misma API de siempre (onInicio, onInicioSesion, onPerfil,
+/// onNotificaciones, onCarrito, onContacto): un acceso aparece solo si se le
+/// pasa su función.
+///
+/// Control de sesión (sirve igual para cliente y administrador):
+/// - Con sesión iniciada: todos los iconos llevan a su pantalla.
+/// - Sin sesión: Inicio, Perfil, Notificaciones y Carrito no abren nada y
+///   muestran un mensaje pequeño "Tienes que iniciar sesión".
+/// - "Iniciar sesión" y "Contáctenos" siempre están libres.
+///
+/// Cómo sabe si hay sesión (en este orden):
+///  1. el parámetro `estaAutenticado`, si la pantalla lo pasa;
+///  2. `BarraInferior.verificadorSesion`, si lo configuraste;
+///  3. `BarraInferior.sesionIniciada` (bandera simple, ver abajo).
+///
+/// Uso más simple (cliente y admin):
+///   - al iniciar sesión con éxito:  BarraInferior.sesionIniciada = true;
+///   - al cerrar sesión:             BarraInferior.sesionIniciada = false;
 class BarraInferior extends StatelessWidget {
+  /// Bandera global de sesión (la misma para cliente y administrador).
+  static bool sesionIniciada = false;
+
+  /// Alternativa: función que devuelve si hay sesión (tiene prioridad sobre
+  /// `sesionIniciada` cuando está configurada).
+  static bool Function()? verificadorSesion;
+
   final VoidCallback? onInicio;
   final VoidCallback? onInicioSesion;
   final VoidCallback? onPerfil;
   final VoidCallback? onNotificaciones;
   final VoidCallback? onCarrito;
   final VoidCallback? onContacto;
+
+  /// Opcional: fuerza el estado de sesión desde la pantalla.
+  final bool? estaAutenticado;
+
+  /// Si es false, "Inicio" queda libre aunque no haya sesión.
+  final bool inicioRequiereSesion;
 
   const BarraInferior({
     super.key,
@@ -22,12 +51,52 @@ class BarraInferior extends StatelessWidget {
     this.onNotificaciones,
     this.onCarrito,
     this.onContacto,
+    this.estaAutenticado,
+    this.inicioRequiereSesion = true,
   });
+
+  bool get _haySesion =>
+      estaAutenticado ?? verificadorSesion?.call() ?? sesionIniciada;
+
+  /// Ejecuta [accion]. Si [requiereSesion] y no hay sesión, avisa.
+  void _ejecutar(
+    BuildContext context,
+    VoidCallback accion, {
+    required bool requiereSesion,
+  }) {
+    if (requiereSesion && !_haySesion) {
+      _avisarSesionRequerida(context);
+      return;
+    }
+    accion();
+  }
+
+  /// Mensaje pequeño con acceso directo a iniciar sesión.
+  void _avisarSesionRequerida(BuildContext context) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Tienes que iniciar sesión'),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Iniciar sesión',
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const InicioSesion()),
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     // Espacio de la barra de gestos del celular, para que no tape los iconos
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final haySesion = _haySesion;
 
     return Container(
       height: 68 + bottomInset, // alto de la barra
@@ -48,28 +117,35 @@ class BarraInferior extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Inicio: libre
           if (onInicio != null)
             Expanded(
               child: _ItemBarra(
                 icono: Icons.home_outlined,
                 texto: 'Inicio',
-                onTap: onInicio!,
+                onTap: () =>
+                    _ejecutar(context, onInicio!,
+                        requiereSesion: inicioRequiereSesion),
               ),
             ),
-          if (onInicioSesion != null)
+          // Iniciar sesión: libre, y se oculta si ya hay sesión
+          if (onInicioSesion != null && !haySesion)
             Expanded(
               child: _ItemBarra(
                 icono: Icons.login_rounded,
                 texto: 'Iniciar sesión',
-                onTap: onInicioSesion!,
+                onTap: () =>
+                    _ejecutar(context, onInicioSesion!, requiereSesion: false),
               ),
             ),
+          // Requieren sesión
           if (onPerfil != null)
             Expanded(
               child: _ItemBarra(
                 icono: Icons.person_outline_rounded,
                 texto: 'Perfil',
-                onTap: onPerfil!,
+                onTap: () =>
+                    _ejecutar(context, onPerfil!, requiereSesion: true),
               ),
             ),
           if (onNotificaciones != null)
@@ -77,7 +153,8 @@ class BarraInferior extends StatelessWidget {
               child: _ItemBarra(
                 icono: Icons.notifications_none_rounded,
                 texto: 'Notificaciones',
-                onTap: onNotificaciones!,
+                onTap: () =>
+                    _ejecutar(context, onNotificaciones!, requiereSesion: true),
               ),
             ),
           if (onCarrito != null)
@@ -85,15 +162,18 @@ class BarraInferior extends StatelessWidget {
               child: _ItemBarra(
                 icono: Icons.shopping_cart_outlined,
                 texto: 'Carrito',
-                onTap: onCarrito!,
+                onTap: () =>
+                    _ejecutar(context, onCarrito!, requiereSesion: true),
               ),
             ),
+          // Contáctenos: libre, sin necesidad de sesión
           if (onContacto != null)
             Expanded(
               child: _ItemBarra(
                 icono: Icons.storefront_outlined,
                 texto: 'Contáctenos',
-                onTap: onContacto!,
+                onTap: () =>
+                    _ejecutar(context, onContacto!, requiereSesion: false),
               ),
             ),
         ],

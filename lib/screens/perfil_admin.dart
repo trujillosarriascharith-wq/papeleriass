@@ -6,6 +6,7 @@ import '../theme/estilostextos.dart';
 import '../widgets/barrasuperior.dart';
 import '../widgets/fondodegradado.dart';
 import '../widgets/campodetexto.dart';
+import '../widgets/BarraInferior.dart';
 import 'home_screen.dart';
 
 /// Pantalla de Perfil del administrador
@@ -169,6 +170,7 @@ class _PerfilAdminState extends State<PerfilAdmin> {
                           icono: Icons.logout,
                           onPressed: () async {
                             await AuthService.cerrarSesion();
+                            BarraInferior.sesionIniciada = false; // cierra la sesión en la barra
                             if (!context.mounted) return;
                             Navigator.pushAndRemoveUntil(
                               context,

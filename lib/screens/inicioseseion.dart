@@ -11,6 +11,7 @@ import '../widgets/campodetexto.dart';
 import '../widgets/fondocurvo.dart';
 import '../widgets/fondodegradado.dart';
 import '../widgets/botondegradado.dart';
+import '../widgets/BarraInferior.dart';
 import 'principal_clienet.dart';
 import 'principal_admin.dart';
 
@@ -64,6 +65,8 @@ class _InicioSesionState extends State<InicioSesion> {
       _aviso(r.mensaje);
       return;
     }
+
+    BarraInferior.sesionIniciada = true; // marca que ya inició sesión
 
     _irSegunRol(r.usuario?['rol']?.toString());
   }
