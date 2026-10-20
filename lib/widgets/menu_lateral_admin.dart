@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/ingresar_productos.dart';
 import '../screens/inventario_screen.dart';
 import '../screens/productos_stock.dart';
 import '../theme/colores.dart';
@@ -16,8 +17,8 @@ class OpcionAdmin {
 
 /// ÚNICO lugar donde se definen las opciones del menú del administrador.
 /// Para conectar una pantalla, agrega el parámetro destino, por ejemplo:
-///   OpcionAdmin('Ingresar productos', Icons.add_box_outlined,
-///       destino: (_) => const PantallaIngresarProductos()),
+///   OpcionAdmin('Inventario', Icons.inventory_2_outlined,
+///       destino: (_) => const PantallaInventario()),
 /// (no olvides importar la pantalla arriba en este archivo)
 final List<OpcionAdmin> opcionesAdmin = [
   OpcionAdmin(
@@ -25,7 +26,11 @@ final List<OpcionAdmin> opcionesAdmin = [
     Icons.inventory_2_outlined,
     destino: (_) => const PantallaInventario(),
   ),
-  OpcionAdmin('Ingresar productos', Icons.add_box_outlined),
+  OpcionAdmin(
+    'Ingresar productos',
+    Icons.add_box_outlined,
+    destino: (_) => const PantallaIngresarProductos(),
+  ),
   OpcionAdmin(
     'Productos en stock',
     Icons.list_alt_rounded,

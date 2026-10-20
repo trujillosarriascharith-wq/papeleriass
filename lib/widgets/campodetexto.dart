@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/colores.dart';
 
 /// Campo de texto blanco y redondeado con ícono a la izquierda.
 ///
+/// - [icono]: ícono izquierdo (opcional; sin él no se muestra ninguno).
 /// - [prefijo]: widget propio para el lado izquierdo. Si se pasa, reemplaza
 ///   a [icono].
 /// - [bordeColor]: si se pasa, dibuja un borde de ese color.
 /// - [colorIcono]: color del ícono izquierdo (por defecto AppColors.secondaryColor).
+/// - [formatos]: restricciones de escritura, ej: solo números.
+/// - [maxLineas]: líneas máximas del campo (no aplica a contraseñas).
 class CampoTexto extends StatefulWidget {
   final String etiqueta;
-  final IconData icono;
+  final IconData? icono;
   final Widget? prefijo;
   final Color? bordeColor;
   final Color? colorIcono;
@@ -19,11 +23,13 @@ class CampoTexto extends StatefulWidget {
   final bool soloLectura;
   final VoidCallback? onTapIconoFinal;
   final IconData? iconoFinal;
+  final List<TextInputFormatter>? formatos;
+  final int maxLineas;
 
   const CampoTexto({
     super.key,
     required this.etiqueta,
-    required this.icono,
+    this.icono,
     this.prefijo,
     this.bordeColor,
     this.colorIcono,
@@ -33,6 +39,8 @@ class CampoTexto extends StatefulWidget {
     this.soloLectura = false,
     this.onTapIconoFinal,
     this.iconoFinal,
+    this.formatos,
+    this.maxLineas = 1,
   });
 
   @override
@@ -62,10 +70,15 @@ class _CampoTextoState extends State<CampoTexto> {
       obscureText: _ocultarTexto,
       readOnly: widget.soloLectura,
       keyboardType: widget.tipoTeclado,
+      inputFormatters: widget.formatos,
+      minLines: 1,
+      maxLines: widget.esPassword ? 1 : widget.maxLineas,
       decoration: InputDecoration(
         hintText: widget.etiqueta,
         prefixIcon: widget.prefijo ??
-            Icon(widget.icono, color: widget.colorIcono ?? AppColors.secondaryColor),
+            (widget.icono == null
+                ? null
+                : Icon(widget.icono, color: widget.colorIcono ?? AppColors.secondaryColor)),
         suffixIcon: widget.esPassword
             ? IconButton(
                 icon: Icon(_ocultarTexto ? Icons.visibility_off : Icons.visibility),
