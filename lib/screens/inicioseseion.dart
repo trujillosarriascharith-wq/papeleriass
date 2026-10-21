@@ -89,10 +89,19 @@ class _InicioSesionState extends State<InicioSesion> {
     try {
       final cuenta = await GoogleAuthService.iniciarSesion();
       if (cuenta == null) return; // canceló
+      if (!mounted) return;
+
       final idToken = cuenta.authentication.idToken;
-      // TODO: enviar idToken a tu backend para verificarlo
+      // TODO: enviar idToken a tu backend para verificarlo y obtener el rol real
       debugPrint(idToken == null ? 'Sin idToken' : 'idToken recibido');
+
       _aviso('Hola ${cuenta.displayName ?? cuenta.email}');
+
+      BarraInferior.sesionIniciada = true; // marca que ya inició sesión
+
+      // Por ahora los usuarios de Google entran como cliente.
+      // Cuando el backend devuelva el rol, pásalo aquí en lugar de 'cliente'.
+      _irSegunRol('cliente');
     } catch (e) {
       debugPrint('Error Google Sign-In: $e');
       _aviso('No se pudo iniciar sesión con Google');

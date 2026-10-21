@@ -1,33 +1,3 @@
-// import 'dart:convert';
-// import 'package:http/http.dart' as http;
-// import '../models/producto_model.dart';
-// import 'api_config.dart';
-
-// class ProductoService {
-//   // 1. Obtener la lista de productos para renderizar en el menú
-//   Future<List<ProductoModel>> obtenerProductos() async {
-//     final url = Uri.parse('${ApiConfig.baseUrl}/helados');
-
-//     try {
-//       final response = await http.get(url, headers: ApiConfig.headers);
-//       final contentType = response.headers['content-type'] ?? '';
-
-//       if (response.statusCode == 200) {
-//         final List<dynamic> datos = jsonDecode(response.body);
-//         return datos.map((item) => ProductoModel.fromJson(item)).toList();
-//       } else {
-//         if (contentType.contains('application/json')) {
-//           final errorData = jsonDecode(response.body);
-//           throw Exception(errorData['message'] ?? errorData['error'] ?? 'Error al cargar productos');
-//         } else {
-//           throw Exception('Error del servidor (Código ${response.statusCode})');
-//         }
-//       }
-//     } catch (e) {
-//       throw Exception(e.toString().replaceAll('Exception: ', ''));
-//     }
-//   }
-// }
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -120,6 +90,69 @@ class ProductoService {
       if (r.statusCode != 201) throw Exception(_mensajeError(r));
     } on TimeoutException {
       throw Exception('El servidor tardó demasiado en responder');
+    } on http.ClientException {
+      throw Exception('No se pudo conectar con el servidor');
+    }
+  }
+
+  /// Actualiza un producto existente (con opción de cambiar imagen o mantener la anterior).
+  static Future<void> actualizar({
+    required int id,
+    required ProductoModel producto,
+    Uint8List? imagenBytes,
+    String? nombreImagen,
+  }) async {
+    final token = await _token();
+    final peticion = http.MultipartRequest(
+      'PUT',
+      Uri.parse('${ApiConfig.productos}/$id'),
+    )
+      ..headers['Authorization'] = 'Bearer $token'
+      ..fields.addAll({
+        'id_categoria': '${producto.idCategoria}',
+        'nombre': producto.nombre,
+        'descripcion': producto.descripcion.join(', '),
+        'precio': '${producto.precio}',
+        'cantidad_stock': '${producto.cantidadStock}',
+        'estado': producto.estado,
+      });
+
+    // Si el administrador seleccionó una nueva imagen, se adjunta
+    if (imagenBytes != null && nombreImagen != null && nombreImagen.isNotEmpty) {
+      peticion.files.add(http.MultipartFile.fromBytes(
+        'imagen',
+        imagenBytes,
+        filename: nombreImagen,
+        contentType: _tipoImagen(nombreImagen),
+      ));
+    }
+
+    try {
+      final enviada = await peticion.send().timeout(const Duration(seconds: 60));
+      final r = await http.Response.fromStream(enviada);
+      if (r.statusCode != 200) throw Exception(_mensajeError(r));
+    } on TimeoutException {
+      throw Exception('El servidor tardó demasiado en responder');
+    } on http.ClientException {
+      throw Exception('No se pudo conectar con el servidor');
+    }
+  }
+
+  /// Elimina un producto por su ID mediante la ruta DELETE.
+  static Future<void> eliminar(int id) async {
+    final token = await _token();
+    try {
+      final r = await http.delete(
+        Uri.parse('${ApiConfig.productos}/$id'),
+        headers: {
+          ...ApiConfig.headers,
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      if (r.statusCode != 200) throw Exception(_mensajeError(r));
+    } on TimeoutException {
+      throw Exception('No se pudo conectar con el servidor');
     } on http.ClientException {
       throw Exception('No se pudo conectar con el servidor');
     }

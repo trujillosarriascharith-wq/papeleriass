@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/BarraInferior.dart';
 import '../models/carrito_item.dart';
 import '../models/producto_model.dart';
 import '../services/carrito_service.dart';
@@ -23,6 +24,9 @@ class _TarjetaProductoState extends State<TarjetaProducto> {
   bool get _disponible =>
       widget.producto.cantidadStock > 0 &&
       widget.producto.estado.toLowerCase() == 'activo';
+
+  // ¿El usuario ya inició sesión? (se activa en InicioSesion al hacer login)
+  bool get _haIniciadoSesion => BarraInferior.sesionIniciada;
 
   void _aviso(String mensaje) {
     ScaffoldMessenger.of(context)
@@ -49,6 +53,12 @@ class _TarjetaProductoState extends State<TarjetaProducto> {
   }
 
   void _agregarAlCarrito() {
+    // Si no hay sesión iniciada, se avisa y no se agrega nada
+    if (!_haIniciadoSesion) {
+      _aviso('Debes iniciar sesión para agregar productos al carrito');
+      return;
+    }
+
     final p = widget.producto;
 
     CarritoService.instancia.agregar(
