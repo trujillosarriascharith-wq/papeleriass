@@ -8,7 +8,7 @@ import '../services/sesion.dart';
 import '../theme/colores.dart';
 import '../theme/estilostextos.dart';
 import '../widgets/BarraInferior.dart';
-import '../widgets/fondodegradado.dart';
+import '../widgets/encabezado_tienda.dart';
 import '../widgets/menu_lateral.dart';
 import '../widgets/tarjetascarrito.dart';
 import 'pedidos_screen.dart';
@@ -16,10 +16,17 @@ import 'pedidos_screen.dart';
 class PantallaCarrito extends StatelessWidget {
   const PantallaCarrito({super.key});
 
+  // INICIAR COMPRA: abre la pantalla de Pedido con los productos marcados
   void _iniciarCompra(BuildContext context) {
     if (CarritoService.instancia.seleccionados.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecciona al menos un producto')),
+      );
+      return;
+    }
+    if (!Sesion.activa) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Inicia sesión para hacer tu pedido')),
       );
       return;
     }
@@ -72,11 +79,7 @@ class PantallaCarrito extends StatelessWidget {
           padding: const EdgeInsets.all(5),
           child: Column(
             children: [
-              FondoDegradado(
-                alto: 120,
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
-                child: _encabezado(context),
-              ),
+              EncabezadoTienda(onInicio: () => Navigator.pop(context)),
               const SizedBox(height: 16),
               Text('Carrito de compras', style: Estilostextos.estilosTitulo),
               const SizedBox(height: 8),
@@ -165,53 +168,6 @@ class PantallaCarrito extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  // Mismo encabezado del home: [menú] [logo] [texto] [volver al inicio]
-  Widget _encabezado(BuildContext context) {
-    const iconConstraints = BoxConstraints(minWidth: 40, minHeight: 40);
-
-    return Row(
-      children: [
-        Builder(
-          builder: (ctx) => IconButton(
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-            icon: const Icon(Icons.menu_rounded),
-            iconSize: 30,
-            color: Colors.white,
-            tooltip: 'Menú',
-            padding: EdgeInsets.zero,
-            constraints: iconConstraints,
-          ),
-        ),
-        const SizedBox(width: 4),
-        const CircleAvatar(
-          radius: 32,
-          backgroundColor: Colors.white,
-          backgroundImage: AssetImage('assets/images/logo2.png'),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              'Papelería y Variedades\nJuan José',
-              textAlign: TextAlign.center,
-              style: Estilostextos.estilosBienvenida,
-            ),
-          ),
-        ),
-        IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.home_rounded),
-          iconSize: 28,
-          color: Colors.white,
-          tooltip: 'Volver al inicio',
-          padding: EdgeInsets.zero,
-          constraints: iconConstraints,
-        ),
-      ],
     );
   }
 }

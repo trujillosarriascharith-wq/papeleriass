@@ -27,6 +27,9 @@ class ApiConfig {
   static String get auth => '$baseUrl/auth';
   static String get notificaciones => '$baseUrl/api/notificaciones';
   static String get perfil => '$baseUrl/api/perfil';
+  //nueva ruta para el carrito
+  static String get pedidos => '$baseUrl/api/pedidos';
+  static String get pagos => '$baseUrl/api/pagos';
 
   static Map<String, String> get headers => {
         'Content-Type': 'application/json',
