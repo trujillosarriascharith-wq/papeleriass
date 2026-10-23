@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:papelerias/screens/perfil_admin.dart';
 import '../models/producto_model.dart';
@@ -10,10 +9,13 @@ import '../widgets/fondodegradado.dart';
 import '../widgets/menu_lateral_admin.dart';
 import '../widgets/tarjetainventario.dart';
 
-/// Inventario completo. Los productos aparecen aquí cuando el administrador
-/// los agrega en la pantalla de "Ingresar productos".
+/// Inventario del administrador. Sin parámetros muestra todos los productos;
+/// con [idCategoria] muestra solo los de esa categoría.
 class PantallaInventario extends StatefulWidget {
-  const PantallaInventario({super.key});
+  final int? idCategoria; // si viene, muestra solo esa categoría
+  final String? nombreCategoria;
+
+  const PantallaInventario({super.key, this.idCategoria, this.nombreCategoria});
 
   @override
   State<PantallaInventario> createState() => _PantallaInventarioState();
@@ -37,9 +39,9 @@ class _PantallaInventarioState extends State<PantallaInventario> {
     super.dispose();
   }
 
-  /// Trae todos los productos del inventario.
+  /// Trae los productos del inventario (todos, o solo los de la categoría).
   Future<List<ProductoModel>> _pedirProductos() async {
-    final todos = await ProductoService.listar();
+    final todos = await ProductoService.listar(idCategoria: widget.idCategoria);
     todos.sort((a, b) => b.idProducto.compareTo(a.idProducto)); // los nuevos primero
     return todos;
   }
@@ -154,8 +156,17 @@ class _PantallaInventarioState extends State<PantallaInventario> {
       );
     }
 
-    // Aún no hay productos en el inventario: no se muestra nada
-    if (_productos.isEmpty) return const SizedBox.shrink();
+    // Aún no hay productos
+    if (_productos.isEmpty) {
+      return widget.nombreCategoria == null
+          ? const SizedBox.shrink()
+          : Center(
+              child: Text(
+                'Aún no hay productos en esta categoría',
+                style: Estilostextos.estilosLetra,
+              ),
+            );
+    }
 
     final lista = _filtrados;
 
@@ -176,6 +187,7 @@ class _PantallaInventarioState extends State<PantallaInventario> {
         itemBuilder: (_, i) => TarjetaInventario(
           key: ValueKey(lista[i].idProducto),
           producto: lista[i],
+          onActualizado: _cargar, // recarga la lista tras editar o eliminar
         ),
       ),
     );
@@ -214,7 +226,7 @@ class _PantallaInventarioState extends State<PantallaInventario> {
     );
   }
 
-  // Panel gris con la lista y el botón de agregar
+  // Panel gris con el título de la categoría (si hay), la lista y el botón de agregar
   Widget _panel() {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 12),
@@ -224,6 +236,14 @@ class _PantallaInventarioState extends State<PantallaInventario> {
       ),
       child: Column(
         children: [
+          if (widget.nombreCategoria != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              child: Text(
+                widget.nombreCategoria!,
+                style: Estilostextos.estilosTitulo,
+              ),
+            ),
           Expanded(child: _contenido()),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 20, 14),
@@ -241,7 +261,10 @@ class _PantallaInventarioState extends State<PantallaInventario> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.fondo,
-      drawer: const MenuLateralAdmin(opcionActiva: 'Inventario'),
+      drawer: MenuLateralAdmin(
+        opcionActiva: 'Inventario',
+        categoriaActiva: widget.idCategoria,
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(5),

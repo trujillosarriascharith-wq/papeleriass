@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papelerias/widgets/botondegradado.dart';
 import '../services/auth_service.dart';
+import '../services/carrito_service.dart';
 import '../theme/colores.dart';
 import '../theme/estilostextos.dart';
 import '../widgets/barrasuperior.dart';
@@ -101,6 +102,21 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
+  // Cierra la sesión, vacía el carrito que se ve en pantalla y vuelve al inicio.
+  // El carrito sigue guardado en la base de datos: al volver a iniciar sesión
+  // el usuario lo recupera.
+  Future<void> _cerrarSesion() async {
+    await AuthService.cerrarSesion();
+    CarritoService.instancia.limpiarLocal(); // el siguiente usuario no ve este carrito
+    BarraInferior.sesionIniciada = false; // cierra la sesión en la barra
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -191,16 +207,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         child: BotonDegradado(
                           texto: 'Cerrar Sesión',
                           icono: Icons.logout,
-                          onPressed: () async {
-                            await AuthService.cerrarSesion();
-                            BarraInferior.sesionIniciada = false; // cierra la sesión en la barra
-                            if (!context.mounted) return;
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(builder: (_) => const HomeScreen()),
-                              (_) => false,
-                            );
-                          },
+                          onPressed: _cerrarSesion,
                         ),
                       ),
                     ],

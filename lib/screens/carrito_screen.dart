@@ -13,8 +13,33 @@ import '../widgets/menu_lateral.dart';
 import '../widgets/tarjetascarrito.dart';
 import 'pedidos_screen.dart';
 
-class PantallaCarrito extends StatelessWidget {
+class PantallaCarrito extends StatefulWidget {
   const PantallaCarrito({super.key});
+
+  @override
+  State<PantallaCarrito> createState() => _PantallaCarritoState();
+}
+
+class _PantallaCarritoState extends State<PantallaCarrito> {
+  @override
+  void initState() {
+    super.initState();
+    // Trae el carrito guardado en la base de datos
+    CarritoService.instancia.cargar();
+  }
+
+  // Muestra un aviso si la operación devolvió un mensaje de error
+  void _avisar(String? mensaje) {
+    if (mensaje == null || !mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(mensaje),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+  }
 
   // INICIAR COMPRA: abre la pantalla de Pedido con los productos marcados
   void _iniciarCompra(BuildContext context) {
@@ -92,8 +117,10 @@ class PantallaCarrito extends StatelessWidget {
 
                     if (items.isEmpty) {
                       return Center(
-                        child: Text('Tu carrito está vacío',
-                            style: Estilostextos.estilosLetra),
+                        child: carrito.cargando
+                            ? const CircularProgressIndicator()
+                            : Text('Tu carrito está vacío',
+                                style: Estilostextos.estilosLetra),
                       );
                     }
 
@@ -108,10 +135,14 @@ class PantallaCarrito extends StatelessWidget {
                               return TarjetaCarrito(
                                 key: ValueKey(item.id),
                                 item: item,
-                                onSeleccionar: (v) => carrito.seleccionar(item, v),
-                                onEliminar: () => carrito.eliminar(item),
-                                onSumar: () => carrito.sumar(item),
-                                onRestar: () => carrito.restar(item),
+                                onSeleccionar: (v) async =>
+                                    _avisar(await carrito.seleccionar(item, v)),
+                                onEliminar: () async =>
+                                    _avisar(await carrito.eliminar(item)),
+                                onSumar: () async =>
+                                    _avisar(await carrito.sumar(item)),
+                                onRestar: () async =>
+                                    _avisar(await carrito.restar(item)),
                               );
                             },
                           ),

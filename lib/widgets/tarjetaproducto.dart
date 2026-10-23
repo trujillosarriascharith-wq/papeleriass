@@ -19,6 +19,7 @@ class TarjetaProducto extends StatefulWidget {
 
 class _TarjetaProductoState extends State<TarjetaProducto> {
   int _cantidad = 1;
+  bool _agregando = false;
 
   // Disponible si está activo y queda stock
   bool get _disponible =>
@@ -29,6 +30,7 @@ class _TarjetaProductoState extends State<TarjetaProducto> {
   bool get _haIniciadoSesion => BarraInferior.sesionIniciada;
 
   void _aviso(String mensaje) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -52,7 +54,7 @@ class _TarjetaProductoState extends State<TarjetaProducto> {
     if (_cantidad > 1) setState(() => _cantidad--);
   }
 
-  void _agregarAlCarrito() {
+  Future<void> _agregarAlCarrito() async {
     // Si no hay sesión iniciada, se avisa y no se agrega nada
     if (!_haIniciadoSesion) {
       _aviso('Debes iniciar sesión para agregar productos al carrito');
@@ -60,8 +62,10 @@ class _TarjetaProductoState extends State<TarjetaProducto> {
     }
 
     final p = widget.producto;
+    setState(() => _agregando = true);
 
-    CarritoService.instancia.agregar(
+    // El carrito se guarda en la base de datos; devuelve null si salió bien
+    final error = await CarritoService.instancia.agregar(
       CarritoItem(
         id: p.idProducto.toString(),
         nombre: p.nombre,
@@ -69,9 +73,17 @@ class _TarjetaProductoState extends State<TarjetaProducto> {
         precio: p.precio,
         imagen: p.imagen,
         cantidad: _cantidad,
+        stock: p.cantidadStock, // tope de piezas disponibles
       ),
     );
 
+    if (!mounted) return;
+    setState(() => _agregando = false);
+
+    if (error != null) {
+      _aviso(error);
+      return;
+    }
     _aviso('${p.nombre} agregado al carrito');
     setState(() => _cantidad = 1);
   }
@@ -158,7 +170,7 @@ class _TarjetaProductoState extends State<TarjetaProducto> {
           width: double.infinity,
           height: 38,
           child: ElevatedButton(
-            onPressed: _disponible ? _agregarAlCarrito : null,
+            onPressed: (_disponible && !_agregando) ? _agregarAlCarrito : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.botonAgregar,
               foregroundColor: Colors.black,

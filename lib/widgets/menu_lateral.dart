@@ -1,59 +1,45 @@
 import 'package:flutter/material.dart';
 import '../models/categoria_app.dart';
 import '../screens/categoria_screen.dart';
+import '../services/categoria_service.dart';
 import '../theme/colores.dart';
 import '../theme/estilostextos.dart';
-
-/// Una categoría del menú.
-/// [destino] es la pantalla a la que lleva. Si es null, muestra "próximamente".
-class CategoriaMenu {
-  final String nombre;
-  final String imagen;
-  final WidgetBuilder? destino;
-
-  const CategoriaMenu(this.nombre, this.imagen, {this.destino});
-}
-
-/// Las categorías del menú salen de categoriasTienda (models/categoria_app.dart),
-/// que es el ÚNICO lugar donde se definen con su id real de la base de datos.
-/// Todas abren la misma pantalla (PantallaCategoria).
-final List<CategoriaMenu> categoriasApp = [
-  for (final c in categoriasTienda)
-    CategoriaMenu(
-      c.nombre,
-      c.imagen,
-      destino: (_) => PantallaCategoria(titulo: c.nombre, idCategoria: c.id),
-    ),
-];
+import 'imagen_categoria.dart';
 
 /// Menú lateral reutilizable. Úsalo en cualquier pantalla:
 ///   Scaffold(drawer: const MenuLateral(), ...)
 /// Si estás dentro de una categoría, pásala para resaltarla:
 ///   const MenuLateral(categoriaActiva: 'Cuadernos')
-class MenuLateral extends StatelessWidget {
+/// Las categorías se leen de la base de datos (CategoriaService).
+class MenuLateral extends StatefulWidget {
   final String? categoriaActiva;
 
   const MenuLateral({super.key, this.categoriaActiva});
 
-  void _abrirCategoria(BuildContext context, CategoriaMenu cat) {
+  @override
+  State<MenuLateral> createState() => _MenuLateralState();
+}
+
+class _MenuLateralState extends State<MenuLateral> {
+  @override
+  void initState() {
+    super.initState();
+    CategoriaService.cargar(); // refresca las categorías al abrir el menú
+  }
+
+  void _abrirCategoria(BuildContext context, CategoriaApp cat) {
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
 
     navigator.pop(); // cierra el menú
 
     // Si ya estás en esa categoría, solo se cierra el menú
-    if (cat.nombre == categoriaActiva) return;
+    if (cat.nombre == widget.categoriaActiva) return;
 
-    if (cat.destino == null) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Categoría ${cat.nombre} próximamente'),
-          backgroundColor: const Color(0xFFFF8FAB),
-        ),
-      );
-      return;
-    }
-    navigator.push(MaterialPageRoute(builder: cat.destino!));
+    navigator.push(
+      MaterialPageRoute(
+        builder: (_) => PantallaCategoria(titulo: cat.nombre, idCategoria: cat.id),
+      ),
+    );
   }
 
   @override
@@ -78,65 +64,26 @@ class MenuLateral extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: categoriasApp.length,
-              itemBuilder: (context, i) {
-                final cat = categoriasApp[i];
-                final activa = cat.nombre == categoriaActiva;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Material(
-                    color: activa ? const Color(0xFFFFE0E8) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () => _abrirCategoria(context, cat),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFFF1F1F1),
-                                ),
-                              ),
-                              child: Image.asset(
-                                cat.imagen,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.image_not_supported_outlined,
-                                  color: Colors.grey,
-                                ),
-                              ),
+            child: ValueListenableBuilder<List<CategoriaApp>>(
+              valueListenable: CategoriaService.categorias,
+              builder: (context, lista, _) {
+                if (lista.isEmpty) {
+                  return ValueListenableBuilder<bool>(
+                    valueListenable: CategoriaService.cargando,
+                    builder: (context, cargando, _) => Center(
+                      child: cargando
+                          ? const CircularProgressIndicator()
+                          : Text(
+                              'No se pudieron cargar las categorías',
+                              style: Estilostextos.estilosLetra,
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(
-                                cat.nombre,
-                                style: Estilostextos.estilosLetra,
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              color: activa
-                                  ? const Color(0xFFB03A5B)
-                                  : Colors.grey.shade400,
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
-                  ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: lista.length,
+                  itemBuilder: (context, i) => _tarjeta(context, lista[i]),
                 );
               },
             ),
@@ -152,6 +99,47 @@ class MenuLateral extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _tarjeta(BuildContext context, CategoriaApp cat) {
+    final activa = cat.nombre == widget.categoriaActiva;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: activa ? const Color(0xFFFFE0E8) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _abrirCategoria(context, cat),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFF1F1F1)),
+                  ),
+                  child: ImagenCategoria(imagen: cat.imagen),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(cat.nombre, style: Estilostextos.estilosLetra),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: activa ? const Color(0xFFB03A5B) : Colors.grey.shade400,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

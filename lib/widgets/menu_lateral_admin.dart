@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import '../models/categoria_app.dart';
 import '../screens/ingresar_productos.dart';
 import '../screens/inventario_screen.dart';
 import '../screens/productos_stock.dart';
+import '../services/categoria_service.dart';
 import '../theme/colores.dart';
 import '../theme/estilostextos.dart';
+import 'categoria_desplegable_admin.dart';
+import 'dialogo_nueva_categoria.dart';
 
 /// Una opción del menú del administrador.
 /// [destino] es la pantalla a la que lleva. Si es null, muestra "próximamente".
@@ -16,10 +20,6 @@ class OpcionAdmin {
 }
 
 /// ÚNICO lugar donde se definen las opciones del menú del administrador.
-/// Para conectar una pantalla, agrega el parámetro destino, por ejemplo:
-///   OpcionAdmin('Inventario', Icons.inventory_2_outlined,
-///       destino: (_) => const PantallaInventario()),
-/// (no olvides importar la pantalla arriba en este archivo)
 final List<OpcionAdmin> opcionesAdmin = [
   OpcionAdmin(
     'Inventario',
@@ -42,10 +42,28 @@ final List<OpcionAdmin> opcionesAdmin = [
 ///   Scaffold(drawer: const MenuLateralAdmin(), ...)
 /// Si estás dentro de una opción, pásala para resaltarla:
 ///   const MenuLateralAdmin(opcionActiva: 'Inventario')
-class MenuLateralAdmin extends StatelessWidget {
+/// Si estás viendo una categoría del inventario, pasa también su id:
+///   MenuLateralAdmin(opcionActiva: 'Inventario', categoriaActiva: 3)
+class MenuLateralAdmin extends StatefulWidget {
   final String? opcionActiva;
+  final int? categoriaActiva;
 
-  const MenuLateralAdmin({super.key, this.opcionActiva});
+  const MenuLateralAdmin({super.key, this.opcionActiva, this.categoriaActiva});
+
+  @override
+  State<MenuLateralAdmin> createState() => _MenuLateralAdminState();
+}
+
+class _MenuLateralAdminState extends State<MenuLateralAdmin> {
+  late bool _inventarioAbierto;
+
+  @override
+  void initState() {
+    super.initState();
+    // Si ya estás en el inventario, el menú arranca con las categorías abiertas
+    _inventarioAbierto = widget.opcionActiva == 'Inventario';
+    CategoriaService.cargar(); // refresca las categorías desde la base de datos
+  }
 
   void _abrirOpcion(BuildContext context, OpcionAdmin opcion) {
     final navigator = Navigator.of(context);
@@ -54,7 +72,7 @@ class MenuLateralAdmin extends StatelessWidget {
     navigator.pop(); // cierra el menú
 
     // Si ya estás en esa opción, solo se cierra el menú
-    if (opcion.nombre == opcionActiva) return;
+    if (opcion.nombre == widget.opcionActiva) return;
 
     if (opcion.destino == null) {
       messenger.showSnackBar(
@@ -66,6 +84,30 @@ class MenuLateralAdmin extends StatelessWidget {
       return;
     }
     navigator.push(MaterialPageRoute(builder: opcion.destino!));
+  }
+
+  // Abre el inventario completo (categoria == null) o el de una categoría
+  void _abrirInventario(BuildContext context, {CategoriaApp? categoria}) {
+    final navigator = Navigator.of(context);
+    navigator.pop(); // cierra el menú
+
+    final yaEstoyAhi = widget.opcionActiva == 'Inventario' &&
+        widget.categoriaActiva == categoria?.id;
+    if (yaEstoyAhi) return;
+
+    final ruta = MaterialPageRoute(
+      builder: (_) => PantallaInventario(
+        idCategoria: categoria?.id,
+        nombreCategoria: categoria?.nombre,
+      ),
+    );
+
+    // Si ya estás en una pantalla de inventario, se reemplaza para no apilarlas
+    if (widget.opcionActiva == 'Inventario') {
+      navigator.pushReplacement(ruta);
+    } else {
+      navigator.push(ruta);
+    }
   }
 
   @override
@@ -90,59 +132,11 @@ class MenuLateralAdmin extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: opcionesAdmin.length,
-              itemBuilder: (context, i) {
-                final opcion = opcionesAdmin[i];
-                final activa = opcion.nombre == opcionActiva;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Material(
-                    color: activa ? const Color(0xFFFFE0E8) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () => _abrirOpcion(context, opcion),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFE0E8),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                opcion.icono,
-                                color: const Color(0xFFB03A5B),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(
-                                opcion.nombre,
-                                style: Estilostextos.estilosLetra,
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              color: activa
-                                  ? const Color(0xFFB03A5B)
-                                  : Colors.grey.shade400,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+              children: [
+                for (final opcion in opcionesAdmin) ..._bloqueOpcion(context, opcion),
+              ],
             ),
           ),
           SafeArea(
@@ -156,6 +150,95 @@ class MenuLateralAdmin extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Cada opción del menú. "Inventario" lleva debajo la lista desplegable.
+  List<Widget> _bloqueOpcion(BuildContext context, OpcionAdmin opcion) {
+    final activa = opcion.nombre == widget.opcionActiva;
+
+    if (opcion.nombre != 'Inventario') {
+      return [
+        _tarjeta(
+          opcion,
+          activa: activa,
+          onTap: () => _abrirOpcion(context, opcion),
+        ),
+      ];
+    }
+
+    return [
+      _tarjeta(
+        opcion,
+        activa: activa,
+        onTap: () => setState(() => _inventarioAbierto = !_inventarioAbierto),
+        flecha: AnimatedRotation(
+          turns: _inventarioAbierto ? 0.25 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: Icon(
+            Icons.chevron_right_rounded,
+            color: activa ? const Color(0xFFB03A5B) : Colors.grey.shade400,
+          ),
+        ),
+      ),
+      AnimatedSize(
+        duration: const Duration(milliseconds: 200),
+        alignment: Alignment.topCenter,
+        child: _inventarioAbierto
+            ? CategoriasDesplegablesAdmin(
+                categoriaActiva: widget.categoriaActiva,
+                todosActivo:
+                    widget.opcionActiva == 'Inventario' && widget.categoriaActiva == null,
+                onTodos: () => _abrirInventario(context),
+                onCategoria: (c) => _abrirInventario(context, categoria: c),
+                onNueva: () => mostrarDialogoNuevaCategoria(context),
+              )
+            : const SizedBox(width: double.infinity, height: 0),
+      ),
+    ];
+  }
+
+  Widget _tarjeta(
+    OpcionAdmin opcion, {
+    required bool activa,
+    required VoidCallback onTap,
+    Widget? flecha,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: activa ? const Color(0xFFFFE0E8) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE0E8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(opcion.icono, color: const Color(0xFFB03A5B)),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(opcion.nombre, style: Estilostextos.estilosLetra),
+                ),
+                flecha ??
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: activa ? const Color(0xFFB03A5B) : Colors.grey.shade400,
+                    ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

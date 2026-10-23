@@ -7,6 +7,8 @@ class CarritoItem {
   final String imagen; // URL (http...) o ruta de asset
   int cantidad;
   bool seleccionado;
+  int stock; // piezas disponibles en el inventario (tope de la cantidad)
+  int? idDetalle; // id de la fila en detalle_carrito (la asigna el servidor)
 
   CarritoItem({
     required this.id,
@@ -16,6 +18,8 @@ class CarritoItem {
     required this.imagen,
     this.cantidad = 1,
     this.seleccionado = true,
+    this.stock = 999999,
+    this.idDetalle,
   });
 
   int get subtotal => precio * cantidad;
