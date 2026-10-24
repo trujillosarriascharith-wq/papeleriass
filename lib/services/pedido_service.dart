@@ -4,7 +4,8 @@ import '../models/carrito_item.dart';
 import 'api_config.dart';
 
 /// Envía el pedido al backend: crea el pedido con sus detalles
-/// (POST /api/pedidos) y luego registra el pago (POST /api/pagos).
+/// (POST /api/pedidos), que también genera las notificaciones, y luego
+/// registra el pago (POST /api/pagos).
 /// El id del usuario lo saca el backend del token.
 class PedidoService {
   static Map<String, dynamic> _json(http.Response r) {
@@ -18,6 +19,7 @@ class PedidoService {
 
   static Future<void> realizar({
     required String token,
+    required String nombre,
     required String direccion,
     required String telefono,
     required String metodoPago,
@@ -35,6 +37,7 @@ class PedidoService {
       }
       detalles.add({
         'id_producto': idProducto,
+        'nombre': i.nombre, // para el texto de la notificación
         'cantidad': i.cantidad,
         'precio_unitario': i.precio,
         'subtotal': i.subtotal,
@@ -46,8 +49,10 @@ class PedidoService {
           Uri.parse(ApiConfig.pedidos),
           headers: cabeceras,
           body: jsonEncode({
+            'nombre': nombre,
             'direccion': direccion,
             'telefono': telefono,
+            'metodo_pago': metodoPago, // Nequi | Efectivo (para la notificación)
             'detalles': detalles,
           }),
         )

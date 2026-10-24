@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:papelerias/screens/contactenos.dart';
+import 'package:papelerias/screens/notificaciones.dart';
 import 'package:papelerias/screens/perfil_admin.dart';
+import '../services/sesion.dart';
 import '../theme/colores.dart';
 import '../theme/estilostextos.dart';
 import '../widgets/fondodegradado.dart';
@@ -29,6 +31,23 @@ class PrincipalAdmin extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PerfilAdmin()),
+    );
+  }
+
+  // Notificaciones del administrador (avisos de pedidos nuevos)
+  void _abrirNotificaciones(BuildContext context) {
+    if (!Sesion.activa) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Inicia sesión para ver tus notificaciones')),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            PantallaNotificaciones(token: Sesion.token!, esAdmin: true),
+      ),
     );
   }
 
@@ -122,9 +141,10 @@ class PrincipalAdmin extends StatelessWidget {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      // Barra inferior del administrador: solo Perfil
+      // Barra inferior del administrador: Perfil y Notificaciones
       bottomNavigationBar: BarraInferior(
         onPerfil: () => _abrirPerfil(context),
+        onNotificaciones: () => _abrirNotificaciones(context),
       ),
     );
   }

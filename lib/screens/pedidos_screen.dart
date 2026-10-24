@@ -59,6 +59,7 @@ class _PantallaPedidosState extends State<PantallaPedidos> {
     try {
       await PedidoService.realizar(
         token: Sesion.token!,
+        nombre: _nombre.text.trim(),
         direccion: _direccion.text.trim(),
         telefono: _telefono.text.trim(),
         metodoPago: _metodoPago!,

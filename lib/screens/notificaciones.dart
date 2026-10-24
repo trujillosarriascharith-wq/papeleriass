@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:papelerias/screens/carrito_screen.dart';
 import 'package:papelerias/screens/contactenos.dart';
+import 'package:papelerias/screens/perfil_admin.dart';
 import 'package:papelerias/screens/perfil_screen.dart';
 import '../theme/colores.dart';
 import '../theme/estilostextos.dart';
 import '../widgets/BarraInferior.dart';
 import '../widgets/fondocurvo.dart';
 import '../widgets/menu_lateral.dart';
+import '../widgets/menu_lateral_admin.dart';
 import '../widgets/tarjetanotificacion.dart';
 import '../services/servicio_notificaciones.dart';
 
 class PantallaNotificaciones extends StatefulWidget {
   final String token; // JWT guardado al iniciar sesión
-  const PantallaNotificaciones({super.key, required this.token});
+  final bool esAdmin; // true: menú y barra del administrador
+  const PantallaNotificaciones({
+    super.key,
+    required this.token,
+    this.esAdmin = false,
+  });
 
   @override
   State<PantallaNotificaciones> createState() => _PantallaNotificacionesState();
@@ -70,15 +77,22 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
 
   // ---------- Navegación de la barra inferior ----------
 
-  // Vuelve a la pantalla principal del cliente
+  // Cliente: vuelve a la pantalla principal. Administrador: regresa a su
+  // pantalla principal (desde donde se abrió esta pantalla).
   void _irAlInicio() {
-    Navigator.popUntil(context, (ruta) => ruta.isFirst);
+    if (widget.esAdmin) {
+      Navigator.pop(context);
+    } else {
+      Navigator.popUntil(context, (ruta) => ruta.isFirst);
+    }
   }
 
   void _abrirPerfil() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const PerfilScreen()),
+      MaterialPageRoute(
+        builder: (_) => widget.esAdmin ? const PerfilAdmin() : const PerfilScreen(),
+      ),
     );
   }
 
@@ -182,11 +196,24 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
     );
   }
 
+  // Cliente: Inicio, Perfil, Carrito y Contáctenos. Administrador: Inicio y Perfil.
+  Widget _barraInferior() {
+    if (widget.esAdmin) {
+      return BarraInferior(onInicio: _irAlInicio, onPerfil: _abrirPerfil);
+    }
+    return BarraInferior(
+      onInicio: _irAlInicio,
+      onPerfil: _abrirPerfil,
+      onCarrito: _abrirCarrito,
+      onContacto: _abrirContactenos,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.fondo,
-      drawer: const MenuLateral(),
+      drawer: widget.esAdmin ? const MenuLateralAdmin() : const MenuLateral(),
       body: FondoCurvo(
         altoCurva: 340,
         child: SafeArea(
@@ -197,13 +224,7 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
           ]),
         ),
       ),
-      // Barra inferior: Inicio, Perfil, Carrito y Contáctenos
-      bottomNavigationBar: BarraInferior(
-        onInicio: _irAlInicio,
-        onPerfil: _abrirPerfil,
-        onCarrito: _abrirCarrito,
-        onContacto: _abrirContactenos,
-      ),
+      bottomNavigationBar: _barraInferior(),
     );
   }
 }

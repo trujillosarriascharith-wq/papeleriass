@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:papelerias/screens/carrito_screen.dart';
 import 'package:papelerias/screens/contactenos.dart';
@@ -42,8 +41,12 @@ class _PantallaCategoriaState extends State<PantallaCategoria> {
   /// Trae del servidor solo los productos de esta categoría.
   Future<List<ProductoModel>> _pedirProductos() async {
     final todos = await ProductoService.listar(idCategoria: widget.idCategoria);
-    // Los clientes solo ven los productos activos
-    return todos.where((p) => p.estado.toLowerCase() == 'activo').toList();
+    // Los clientes ven los productos activos y los agotados (estos con el
+    // botón "Agotado"). Los inactivos no se muestran.
+    return todos.where((p) {
+      final e = p.estado.toLowerCase();
+      return e == 'activo' || e == 'agotado';
+    }).toList();
   }
 
   Future<void> _cargar() async {

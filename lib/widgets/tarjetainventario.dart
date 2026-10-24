@@ -24,6 +24,9 @@ class TarjetaInventario extends StatelessWidget {
   bool get _stockBajo =>
       producto.cantidadStock <= PantallaProductosStock.umbralStockBajo;
 
+  // Sin unidades: en lugar de "0 UD" se muestra el letrero "Agotado"
+  bool get _agotado => producto.cantidadStock <= 0;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -100,21 +103,45 @@ class TarjetaInventario extends StatelessWidget {
     );
   }
 
-  // Unidades y botones de Editar (lápiz) / Eliminar
+  // Letrero rojo que reemplaza a "0 UD" cuando el producto se agotó
+  Widget _letreroAgotado() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEBEE),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFD50000), width: 1.2),
+      ),
+      child: const Text(
+        'Agotado',
+        style: TextStyle(
+          color: Color(0xFFD50000),
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // Unidades (o letrero "Agotado") y botones de Editar (lápiz) / Eliminar
   Widget _unidadesYAcciones(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          '${producto.cantidadStock}',
-          style: TextStyle(
-            color: _stockBajo ? const Color(0xFFD50000) : const Color(0xFF00D26A),
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
+        if (_agotado)
+          _letreroAgotado()
+        else ...[
+          Text(
+            '${producto.cantidadStock}',
+            style: TextStyle(
+              color: _stockBajo ? const Color(0xFFD50000) : const Color(0xFF00D26A),
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        Text('UD', style: Estilostextos.estilosLetra.copyWith(fontSize: 14)),
+          Text('UD', style: Estilostextos.estilosLetra.copyWith(fontSize: 14)),
+        ],
         const SizedBox(height: 6),
         Row(
           mainAxisSize: MainAxisSize.min,
