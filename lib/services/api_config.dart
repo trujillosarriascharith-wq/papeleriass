@@ -30,6 +30,7 @@ class ApiConfig {
   //nueva ruta para el carrito
   static String get pedidos => '$baseUrl/api/pedidos';
   static String get pagos => '$baseUrl/api/pagos';
+  static String get comprobantes => '$baseUrl/api/comprobantes';
 
   static Map<String, String> get headers => {
         'Content-Type': 'application/json',

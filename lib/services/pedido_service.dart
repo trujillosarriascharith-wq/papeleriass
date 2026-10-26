@@ -25,6 +25,7 @@ class PedidoService {
     required String metodoPago,
     required List<CarritoItem> items,
     required int total,
+     int? idComprobante, // solo para Nequi
   }) async {
     final cabeceras = {...ApiConfig.headers, 'Authorization': 'Bearer $token'};
 
@@ -53,6 +54,7 @@ class PedidoService {
             'direccion': direccion,
             'telefono': telefono,
             'metodo_pago': metodoPago, // Nequi | Efectivo (para la notificación)
+            if (idComprobante != null) 'id_comprobante': idComprobante,
             'detalles': detalles,
           }),
         )

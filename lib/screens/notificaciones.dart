@@ -11,6 +11,7 @@ import '../widgets/menu_lateral.dart';
 import '../widgets/menu_lateral_admin.dart';
 import '../widgets/tarjetanotificacion.dart';
 import '../services/servicio_notificaciones.dart';
+import '../services/comprobante_service.dart';
 
 class PantallaNotificaciones extends StatefulWidget {
   final String token; // JWT guardado al iniciar sesión
@@ -109,6 +110,129 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
       MaterialPageRoute(builder: (_) => const PantallaContactenos()),
     );
   }
+    // ---------- Validación de comprobantes (administrador) ----------
+
+  void _verImagen(String url) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(12),
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              child: Image.network(
+                url,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Text('No se pudo cargar la imagen',
+                      style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String? _estadoComprobante(Map<String, dynamic> n) {
+    final c = n['comprobantes'];
+    return c is Map ? c['estado']?.toString() : null;
+  }
+
+  Future<void> _validar(Map<String, dynamic> n, bool aprobar) async {
+    String? motivo;
+    if (!aprobar) {
+      final ctrl = TextEditingController();
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Rechazar comprobante'),
+          content: TextField(
+            controller: ctrl,
+            decoration: const InputDecoration(hintText: 'Motivo (opcional)'),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Rechazar')),
+          ],
+        ),
+      );
+      motivo = ctrl.text.trim();
+      ctrl.dispose();
+      if (ok != true) return;
+    }
+
+    try {
+      await ComprobanteService.validar(
+        widget.token,
+        n['id_comprobante'],
+        aprobar: aprobar,
+        motivo: motivo,
+      );
+      if (!mounted) return;
+      setState(() {
+        n['comprobantes'] = {'estado': aprobar ? 'aprobado' : 'rechazado'};
+        n['leida'] = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(aprobar
+            ? 'Pago aprobado. Se avisó al cliente'
+            : 'Comprobante rechazado. Se avisó al cliente'),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString().replaceFirst('Exception: ', '')),
+        backgroundColor: Colors.red.shade700,
+      ));
+      _cargar(); // por si otro admin ya lo validó
+    }
+  }
+
+  Widget? _acciones(Map<String, dynamic> n) {
+    if (!widget.esAdmin || n['id_comprobante'] == null) return null;
+    final estado = _estadoComprobante(n);
+
+    if (estado == 'pendiente') {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => _validar(n, false),
+              child: const Text('Rechazar'),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => _validar(n, true),
+              child: const Text('Aprobar pago'),
+            ),
+          ),
+        ],
+      );
+    }
+    if (estado == 'aprobado') {
+      return Text('✔ Pago aprobado',
+          style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w600));
+    }
+    if (estado == 'rechazado') {
+      return Text('✖ Comprobante rechazado',
+          style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.w600));
+    }
+    return null;
+  }
 
   // ---------- Widgets ----------
 
@@ -144,12 +268,16 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
             direction: DismissDirection.endToStart,
             onDismissed: (_) => _eliminar(i),
             background: _fondoBorrar(),
-            child: TarjetaNotificacion(
+                       child: TarjetaNotificacion(
               texto: n['mensaje']?.toString() ?? '',
               fecha: n['fecha']?.toString(),
               leida: n['leida'] == true,
               imagen: n['imagen']?.toString(),
               onTap: () => _marcarLeida(n),
+              onVerImagen: n['imagen'] != null
+                  ? () => _verImagen(n['imagen'].toString())
+                  : null,
+              acciones: _acciones(n),
             ),
           );
         },
