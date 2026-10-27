@@ -11,7 +11,7 @@ class TarjetaCarrito extends StatelessWidget {
   final VoidCallback onEliminar;
   final VoidCallback onSumar;
   final VoidCallback onRestar;
-
+//
   const TarjetaCarrito({
     super.key,
     required this.item,
