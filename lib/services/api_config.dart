@@ -1,9 +1,21 @@
 import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiConfig {
+  // Cambia a false cuando quieras volver a probar con tu servidor Node.js local
+  static const bool useRemote = true;
+  
+  // URL de tu backend desplegado en Render (ahora sí se usa)
+  static const String _remoteUrl = 'https://app-papeleria-2.onrender.com';
+
   // Web (Chrome) usa localhost; el emulador Android usa 10.0.2.2
   static String get baseUrl {
+    // 0. Si useRemote es true, usamos directamente Render sin importar la plataforma
+    if (useRemote) {
+      return _remoteUrl;
+    }
+
     // 1. Evaluar Web primero para evitar que Platform.isX genere un error en JS
     if (kIsWeb) {
       return 'http://localhost:3000';
@@ -31,9 +43,9 @@ class ApiConfig {
   static String get pedidos => '$baseUrl/api/pedidos';
   static String get pagos => '$baseUrl/api/pagos';
   static String get comprobantes => '$baseUrl/api/comprobantes';
-
+ 
   static Map<String, String> get headers => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 }
