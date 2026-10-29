@@ -110,7 +110,8 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
       MaterialPageRoute(builder: (_) => const PantallaContactenos()),
     );
   }
-    // ---------- Validación de comprobantes (administrador) ----------
+
+  // ---------- Validación de comprobantes (administrador) ----------
 
   void _verImagen(String url) {
     showDialog(
@@ -187,7 +188,7 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
       });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(aprobar
-            ? 'Pago aprobado. Se avisó al cliente'
+            ? 'Pago aceptado. Se avisó al cliente'
             : 'Comprobante rechazado. Se avisó al cliente'),
       ));
     } catch (e) {
@@ -217,14 +218,14 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
           Expanded(
             child: ElevatedButton(
               onPressed: () => _validar(n, true),
-              child: const Text('Aprobar pago'),
+              child: const Text('Aceptar'),
             ),
           ),
         ],
       );
     }
     if (estado == 'aprobado') {
-      return Text('✔ Pago aprobado',
+      return Text('✔ Pago aceptado',
           style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w600));
     }
     if (estado == 'rechazado') {
@@ -268,7 +269,7 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
             direction: DismissDirection.endToStart,
             onDismissed: (_) => _eliminar(i),
             background: _fondoBorrar(),
-                       child: TarjetaNotificacion(
+            child: TarjetaNotificacion(
               texto: n['mensaje']?.toString() ?? '',
               fecha: n['fecha']?.toString(),
               leida: n['leida'] == true,

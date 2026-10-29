@@ -85,6 +85,19 @@ class _PantallaPedidosState extends State<PantallaPedidos> {
       return;
     }
 
+    // El administrador necesita estos datos para validar el pago
+    if (_nombre.text.trim().isEmpty ||
+        _direccion.text.trim().isEmpty ||
+        _telefono.text.trim().isEmpty) {
+      _mensaje('Completa nombre, dirección y teléfono antes de adjuntar el comprobante');
+      return;
+    }
+    final carrito = CarritoService.instancia;
+    if (carrito.seleccionados.isEmpty) {
+      _mensaje('No hay productos seleccionados en el pedido');
+      return;
+    }
+
     XFile? archivo;
     Uint8List bytes;
     try {
@@ -113,7 +126,11 @@ class _PantallaPedidosState extends State<PantallaPedidos> {
         token: Sesion.token!,
         bytes: bytes,
         nombreArchivo: archivo.name,
-        monto: CarritoService.instancia.total,
+        nombre: _nombre.text.trim(),
+        direccion: _direccion.text.trim(),
+        telefono: _telefono.text.trim(),
+        items: carrito.seleccionados,
+        monto: carrito.total,
       );
       if (!mounted) return;
       setState(() {

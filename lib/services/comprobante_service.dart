@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import '../models/carrito_item.dart';
 import 'api_config.dart';
 
 class Comprobante {
@@ -34,17 +35,29 @@ class ComprobanteService {
   static String _error(http.Response r, String porDefecto) =>
       (_decode(r)['error'] ?? porDefecto).toString();
 
-  /// El cliente sube la imagen del comprobante (queda "pendiente")
+  /// El cliente sube la imagen del comprobante junto con los datos del pedido
+  /// (nombre, dirección, teléfono y productos) para que el administrador los vea.
   static Future<Comprobante> subir({
     required String token,
     required Uint8List bytes,
     required String nombreArchivo,
+    required String nombre,
+    required String direccion,
+    required String telefono,
+    required List<CarritoItem> items,
     int? monto,
   }) async {
     final req = http.MultipartRequest('POST', Uri.parse(ApiConfig.comprobantes));
     req.headers['Accept'] = 'application/json';
     req.headers['Authorization'] = 'Bearer $token';
     if (monto != null) req.fields['monto'] = '$monto';
+    req.fields['nombre'] = nombre;
+    req.fields['direccion'] = direccion;
+    req.fields['telefono'] = telefono;
+    req.fields['items'] = jsonEncode([
+      for (final i in items)
+        {'id_producto': int.tryParse(i.id), 'cantidad': i.cantidad},
+    ]);
 
     final ext = nombreArchivo.toLowerCase().split('.').last;
     final subtipo = ext == 'png' ? 'png' : (ext == 'webp' ? 'webp' : 'jpeg');
