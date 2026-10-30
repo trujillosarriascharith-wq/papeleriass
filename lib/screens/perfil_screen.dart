@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:papelerias/widgets/botondegradado.dart';
 import '../services/auth_service.dart';
 import '../services/carrito_service.dart';
+import '../services/sesion.dart';
 import '../theme/colores.dart';
 import '../theme/estilostextos.dart';
 import '../widgets/barrasuperior.dart';
 import '../widgets/fondodegradado.dart';
 import '../widgets/campodetexto.dart';
 import '../widgets/BarraInferior.dart';
+import 'carrito_screen.dart';
+import 'contactenos.dart';
 import 'home_screen.dart';
+import 'notificaciones.dart';
 
 /// Pantalla de Perfil del usuario
 class PerfilScreen extends StatefulWidget {
@@ -117,6 +121,35 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
+  // ---------- Navegación de la barra inferior ----------
+
+  void _irAlInicio() =>
+      Navigator.of(context).popUntil((ruta) => ruta.isFirst);
+
+  void _abrirNotificaciones() {
+    if (!Sesion.activa) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PantallaNotificaciones(token: Sesion.token!),
+      ),
+    );
+  }
+
+  void _abrirCarrito() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PantallaCarrito()),
+    );
+  }
+
+  void _abrirContactenos() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PantallaContactenos()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,41 +164,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
+                    // Encabezado con degradado (ya sin la barra de iconos)
                     FondoDegradado(
                       alto: 170,
-                      padding: const EdgeInsets.fromLTRB(12, 40, 12, 0),
-                      // Sub-barra con degradado y sombra encima del degradado grande
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.35),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: FondoDegradado(
-                            alto: 34,
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: BarraSuperior(
-                              colorIconos: Colors.black,
-                              compacto: true,
-                              iconoInicio: Icons.home_outlined,
-                              iconoPerfil: Icons.person_outline,
-                              iconoCarrito: Icons.shopping_cart_outlined,
-                              iconoNotificaciones: Icons.notifications_outlined,
-                              onInicio: () =>
-                                  Navigator.of(context).popUntil((r) => r.isFirst),
-                              onCarrito: () {},
-                              onNotificaciones: () {},
-                            ),
-                          ),
-                        ),
-                      ),
+                      padding: EdgeInsets.zero,
+                      child: const SizedBox.shrink(),
                     ),
                     Positioned(
                       bottom: -60,
@@ -213,11 +216,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 120),
+                const SizedBox(height: 24),
               ],
             ),
           ),
         ],
+      ),
+      // Barra inferior: Inicio (casita), Notificaciones, Carrito y Contáctenos
+      bottomNavigationBar: BarraInferior(
+        onInicio: _irAlInicio,
+        onNotificaciones: _abrirNotificaciones,
+        onCarrito: _abrirCarrito,
+        onContacto: _abrirContactenos,
       ),
     );
   }
