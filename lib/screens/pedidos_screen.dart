@@ -226,9 +226,10 @@ class _PantallaPedidosState extends State<PantallaPedidos> {
       if (!mounted) return;
       _mensaje('¡Pedido realizado con éxito!');
       _irAlInicio();
-    } catch (e) {
+       } catch (e) {
       if (mounted) _mensaje(e.toString().replaceFirst('Exception: ', ''));
-    } finally {
+      carrito.cargar(); // refresca el stock real del carrito
+    } finally  {
       if (mounted) setState(() => _enviando = false);
     }
   }

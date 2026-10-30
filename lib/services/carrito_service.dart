@@ -170,7 +170,7 @@ class CarritoService extends ChangeNotifier {
     if (item.cantidad <= 1) return null;
     return _cambiarCantidad(item, item.cantidad - 1);
   }
-
+//kkkkkk
   Future<String?> _cambiarCantidad(CarritoItem item, int nueva) async {
     final cabeceras = await _cabeceras();
     if (cabeceras == null || item.idDetalle == null) {
@@ -193,7 +193,9 @@ class CarritoService extends ChangeNotifier {
       if (r.statusCode != 200) {
         item.cantidad = anterior; // se deshace
         notifyListeners();
-        return _mensajeError(r, 'No se pudo actualizar la cantidad');
+        final mensaje = _mensajeError(r, 'No se pudo actualizar la cantidad');
+        await cargar(); // trae el stock actualizado del servidor
+        return mensaje;
       }
       return null;
     } catch (_) {
