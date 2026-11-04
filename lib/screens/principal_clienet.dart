@@ -23,7 +23,7 @@ class PrincipalClient extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const ChatPapeleriaModal(),
+       builder: (_) => const ChatPapeleriaModal(esAdmin: true), 
     );
   }
 

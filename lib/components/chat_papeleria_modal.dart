@@ -127,13 +127,18 @@
 import 'package:flutter/material.dart';
 import '../models/chat_mensaje.dart';
 import '../services/chatpapeleriaservice.dart';
+import '../widgets/tarjetastock.dart';
 import 'chat/chat_header.dart';
 import 'chat/chat_burbuja.dart';
 import 'chat/chat_input_field.dart';
 import 'chat/chat_producto_tarjeta.dart';
 
 class ChatPapeleriaModal extends StatefulWidget {
-  const ChatPapeleriaModal({super.key});
+  /// Solo cambia el aspecto (título y saludo). Los permisos reales de
+  /// administrador los decide el servidor con el token de sesión.
+  final bool esAdmin;
+
+  const ChatPapeleriaModal({super.key, this.esAdmin = false});
 
   @override
   State<ChatPapeleriaModal> createState() => _ChatPapeleriaModalState();
@@ -142,14 +147,21 @@ class ChatPapeleriaModal extends StatefulWidget {
 class _ChatPapeleriaModalState extends State<ChatPapeleriaModal> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<ChatMensaje> _mensajes = [
-    const ChatMensaje(
-      esUsuario: false,
-      texto:
-          '¡Hola! Bienvenido a Papelería Juan Jose. ¿Qué producto, precio o envío te gustaría conocer hoy?',
-    ),
-  ];
+  late final List<ChatMensaje> _mensajes;
   bool _cargando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _mensajes = [
+      ChatMensaje(
+        esUsuario: false,
+        texto: widget.esAdmin
+            ? '¡Hola! Puedes preguntarme por productos y precios, o por los productos con poco stock.'
+            : '¡Hola! Bienvenido a Papelería Juan Jose. ¿Qué producto, precio o envío te gustaría conocer hoy?',
+      ),
+    ];
+  }
 
   void _enviarMensaje() async {
     final texto = _controller.text.trim();
@@ -172,6 +184,7 @@ class _ChatPapeleriaModalState extends State<ChatPapeleriaModal> {
             esUsuario: false,
             texto: respuesta.texto,
             productos: respuesta.productos,
+            esStock: respuesta.esStock,
           ),
         );
         _cargando = false;
@@ -181,7 +194,6 @@ class _ChatPapeleriaModalState extends State<ChatPapeleriaModal> {
   }
 
   void _scrollHaciaAbajo() {
-    // Doble espera: las fotos de las tarjetas cambian la altura al cargar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -213,7 +225,7 @@ class _ChatPapeleriaModalState extends State<ChatPapeleriaModal> {
       ),
       child: Column(
         children: [
-          const ChatHeader(),
+          ChatHeader(esAdmin: widget.esAdmin),
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -227,7 +239,12 @@ class _ChatPapeleriaModalState extends State<ChatPapeleriaModal> {
                     if (item.texto.isNotEmpty)
                       ChatBurbuja(texto: item.texto, esUsuario: item.esUsuario),
                     for (final p in item.productos)
-                      ChatProductoTarjeta(producto: p),
+                      item.esStock
+                          ? TarjetaStock(
+                              key: ValueKey('stock_${p.idProducto}'),
+                              producto: p,
+                            )
+                          : ChatProductoTarjeta(producto: p),
                   ],
                 );
               },

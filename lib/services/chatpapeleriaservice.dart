@@ -32,14 +32,15 @@
 
  
 //     }
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/chat_mensaje.dart';
 import '../models/producto_model.dart';
 import 'api_config.dart';
+import 'sesion.dart';
 
 class ChatPapeleriaService {
-  // Si en index.js montaste el chat en otra ruta, cambia solo '/api/chat'
   static String get _url => '${ApiConfig.baseUrl}/api/chat';
 
   // Se conserva la sesión mientras la app esté abierta
@@ -53,7 +54,11 @@ class ChatPapeleriaService {
       final r = await http
           .post(
             Uri.parse(_url),
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              // Si hay sesión se manda el token; el servidor decide si es admin
+              if (Sesion.activa) 'Authorization': 'Bearer ${Sesion.token}',
+            },
             body: jsonEncode({
               'mensaje': mensaje,
               if (_sesionId != null) 'sesionId': _sesionId,
@@ -76,6 +81,7 @@ class ChatPapeleriaService {
       return RespuestaChat(
         texto: (data['respuesta'] ?? '').toString(),
         productos: productos,
+        esStock: data['esStock'] == true,
       );
     } catch (_) {
       return const RespuestaChat(texto: _errorConexion);
