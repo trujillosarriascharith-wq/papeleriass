@@ -11,6 +11,7 @@ import '../theme/colores.dart';
 /// - [colorIcono]: color del ícono izquierdo (por defecto AppColors.secondaryColor).
 /// - [formatos]: restricciones de escritura, ej: solo números.
 /// - [maxLineas]: líneas máximas del campo (no aplica a contraseñas).
+/// - [focusNode]: para dar o quitar el foco por código (opcional).
 class CampoTexto extends StatefulWidget {
   final String etiqueta;
   final IconData? icono;
@@ -18,6 +19,7 @@ class CampoTexto extends StatefulWidget {
   final Color? bordeColor;
   final Color? colorIcono;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final bool esPassword;
   final TextInputType tipoTeclado;
   final bool soloLectura;
@@ -34,6 +36,7 @@ class CampoTexto extends StatefulWidget {
     this.bordeColor,
     this.colorIcono,
     this.controller,
+    this.focusNode,
     this.esPassword = false,
     this.tipoTeclado = TextInputType.text,
     this.soloLectura = false,
@@ -67,6 +70,7 @@ class _CampoTextoState extends State<CampoTexto> {
   Widget build(BuildContext context) {
     return TextField(
       controller: widget.controller,
+      focusNode: widget.focusNode,
       obscureText: _ocultarTexto,
       readOnly: widget.soloLectura,
       keyboardType: widget.tipoTeclado,
