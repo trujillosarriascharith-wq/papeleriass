@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../widgets/BarraInferior.dart';
 import '../models/carrito_item.dart';
@@ -8,6 +9,7 @@ import '../theme/estilostextos.dart';
 
 /// Tarjeta de producto para las pantallas de categoría:
 /// foto, descripción, precio, contador (- 1 +) y botón "Agregar al carrito".
+/// Al tocar la foto se abre en grande (con zoom).
 class TarjetaProducto extends StatefulWidget {
   final ProductoModel producto;
 
@@ -111,29 +113,108 @@ class _TarjetaProductoState extends State<TarjetaProducto> {
     );
   }
 
-  Widget _foto() {
-    const tamano = 110.0;
-    final img = widget.producto.imagen;
+  // ---------- Imagen ----------
+
+  /// Dibuja la imagen (red o asset). Se usa en la tarjeta y en la vista grande.
+  Widget _imagen(
+    String img, {
+    double? ancho,
+    double? alto,
+    BoxFit fit = BoxFit.cover,
+  }) {
     final error = Container(
-      width: tamano,
-      height: tamano,
+      width: ancho,
+      height: alto,
       color: AppColors.fondoComponente,
       child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey),
     );
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: img.startsWith('http')
-          ? Image.network(img,
-              width: tamano, height: tamano, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => error)
-          : img.isEmpty
-              ? error
-              : Image.asset(img,
-                  width: tamano, height: tamano, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => error),
+    if (img.isEmpty) return error;
+
+    if (img.startsWith('http')) {
+      return Image.network(
+        img,
+        width: ancho,
+        height: alto,
+        fit: fit,
+        errorBuilder: (_, __, ___) => error,
+        loadingBuilder: (_, child, progreso) {
+          if (progreso == null) return child;
+          return SizedBox(
+            width: ancho,
+            height: alto,
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+      );
+    }
+
+    return Image.asset(
+      img,
+      width: ancho,
+      height: alto,
+      fit: fit,
+      errorBuilder: (_, __, ___) => error,
     );
   }
+
+  /// Foto pequeña de la tarjeta; al tocarla se abre en grande.
+  Widget _foto() {
+    const tamano = 110.0;
+    final img = widget.producto.imagen;
+
+    return GestureDetector(
+      onTap: img.isEmpty ? null : _verImagenGrande,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: _imagen(img, ancho: tamano, alto: tamano),
+      ),
+    );
+  }
+
+  /// Abre la imagen en grande. Se puede hacer zoom con los dedos (pellizcar)
+  /// y se cierra tocando fuera de la imagen o con la X.
+  void _verImagenGrande() {
+    final img = widget.producto.imagen;
+    if (img.isEmpty) return;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.all(12),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            InteractiveViewer(
+              minScale: 1,
+              maxScale: 5,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _imagen(img, fit: BoxFit.contain),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IconButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                icon: const Icon(Icons.close_rounded),
+                color: Colors.white,
+                iconSize: 28,
+                tooltip: 'Cerrar',
+                style: IconButton.styleFrom(backgroundColor: Colors.black54),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------- Información ----------
 
   Widget _informacion() {
     final p = widget.producto;

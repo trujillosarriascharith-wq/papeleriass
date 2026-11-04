@@ -6,10 +6,11 @@ class PantallaContactenos extends StatelessWidget {
   const PantallaContactenos({super.key});
 
   // Cambia estos datos si algún día cambian en la papelería
+  static const _propietaria = 'Magali Castro';
   static const _telefono = '322 8793769';
   static const _correo = 'papeleriajuanjose2017@gmail.com';
   static const _direccion = 'Cra. 5# 8-36, Agrado, Huila';
-    static const _propietaria = 'Magali Castro';
+  
 
 
   // Foto de la papelería (guárdala en assets/images/ con este nombre)
@@ -60,6 +61,7 @@ class PantallaContactenos extends StatelessWidget {
                         color: Colors.black87,
                       ),
                     ),
+                    _tarjetaInfo(Icons.person, 'Propietaria', _propietaria),
                     const SizedBox(height: 20),
                     _tarjetaInfo(Icons.phone, 'Teléfono', _telefono),
                     const SizedBox(height: 12),
@@ -67,7 +69,7 @@ class PantallaContactenos extends StatelessWidget {
                     const SizedBox(height: 12),
                     _tarjetaInfo(Icons.location_on, 'Dirección', _direccion),
                      const SizedBox(height: 12),
-                    _tarjetaInfo(Icons.person, 'Propietaria', _propietaria),
+                    
                   ],
                 ),
               ),
