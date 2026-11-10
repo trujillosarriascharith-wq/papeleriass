@@ -1,4 +1,6 @@
+
 // import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
 // import 'package:papelerias/widgets/botondegradado.dart';
 // import '../services/auth_service.dart';
 // import '../services/carrito_service.dart';
@@ -7,8 +9,9 @@
 // import '../theme/estilostextos.dart';
 // import '../widgets/barrasuperior.dart';
 // import '../widgets/fondodegradado.dart';
-// import '../widgets/campodetexto.dart';
 // import '../widgets/BarraInferior.dart';
+// import '../widgets/formulario_perfil.dart';
+// import '../widgets/foto_perfil_editable.dart';
 // import 'carrito_screen.dart';
 // import 'contactenos.dart';
 // import 'home_screen.dart';
@@ -24,86 +27,55 @@
 
 // class _PerfilScreenState extends State<PerfilScreen> {
 //   static const _rutaFoto = 'assets/images/perfil.webp';
-//   static const _rutaGmail = 'assets/icons/gmail.webp';
 
-//   final _nombre = TextEditingController();
-//   final _correo = TextEditingController();
-//   final _direccion = TextEditingController();
-//   final _telefono = TextEditingController();
 //   String? _fotoUrl;
+//   bool _subiendoFoto = false;
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     _cargarUsuario();
+//   // Lo llama el formulario cada vez que carga los datos del usuario
+//   void _usuarioCargado(Map<String, dynamic> u) {
+//     if (!mounted) return;
+//     final foto = (u['foto'] ?? '').toString();
+//     setState(() => _fotoUrl = foto.isEmpty ? null : foto);
 //   }
 
-//   Future<void> _cargarUsuario() async {
-//     final u = await AuthService.usuarioGuardado();
-//     if (u == null || !mounted) return;
-//     setState(() {
-//       _nombre.text = u['nombre']?.toString() ?? '';
-//       _correo.text = u['email']?.toString() ?? '';
-//       _direccion.text = u['direccion']?.toString() ?? '';
-//       _telefono.text = u['telefono']?.toString() ?? '';
-//       final f = u['foto']?.toString() ?? '';
-//       _fotoUrl = f.isEmpty ? null : f;
-//     });
+//   void _aviso(String mensaje) {
+//     if (!mounted) return;
+//     ScaffoldMessenger.of(context)
+//       ..hideCurrentSnackBar()
+//       ..showSnackBar(SnackBar(content: Text(mensaje)));
 //   }
 
-//   @override
-//   void dispose() {
-//     _nombre.dispose();
-//     _correo.dispose();
-//     _direccion.dispose();
-//     _telefono.dispose();
-//     super.dispose();
-//   }
+//   // Abre la galería, sube la foto y la deja guardada en la base de datos
+//   Future<void> _cambiarFoto() async {
+//     if (_subiendoFoto) return;
+//     try {
+//       final archivo = await ImagePicker().pickImage(
+//         source: ImageSource.gallery,
+//         maxWidth: 1024,
+//         imageQuality: 85,
+//       );
+//       if (archivo == null) return; // canceló
 
-//   Widget _campo(String etiqueta, IconData icono, TextEditingController c,
-//       {TextInputType tipo = TextInputType.text, Widget? prefijo}) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 14),
-//       child: CampoTexto(
-//         etiqueta: etiqueta,
-//         icono: icono,
-//         prefijo: prefijo,
-//         bordeColor: AppColors.primaryColor, //borde de los campos
-//         colorIcono: Colors.black,
-//         controller: c,
-//         tipoTeclado: tipo,
-//         iconoFinal: Icons.edit_outlined,
-//         onTapIconoFinal: () {},
-//       ),
-//     );
-//   }
+//       final bytes = await archivo.readAsBytes();
+//       if (!mounted) return;
+//       setState(() => _subiendoFoto = true);
 
-//   Widget _fotoPerfil() {
-//     final ImageProvider imagen = _fotoUrl != null
-//         ? NetworkImage(_fotoUrl!)
-//         : const AssetImage(_rutaFoto);
+//       final r = await AuthService.subirFotoPerfil(bytes);
+//       if (!mounted) return;
 
-//     return Stack(
-//       children: [
-//         CircleAvatar(
-//           radius: 58,
-//           backgroundColor: Colors.white, //borde de la foto
-//           child: CircleAvatar(radius: 54, backgroundImage: imagen),
-//         ),
-//         Positioned(
-//           bottom: 0,
-//           right: 0,
-//           child: GestureDetector(
-//             onTap: () {},
-//             child: const CircleAvatar(
-//               radius: 16,
-//               backgroundColor: Colors.white,
-//               child: Icon(Icons.camera_alt, size: 18, color: Colors.black),
-//             ),
-//           ),
-//         ),
-//       ],
-//     );
+//       setState(() {
+//         _subiendoFoto = false;
+//         if (r.exito) {
+//           final f = (r.usuario?['foto'] ?? '').toString();
+//           if (f.isNotEmpty) _fotoUrl = f;
+//         }
+//       });
+//       _aviso(r.exito ? 'Foto actualizada' : r.mensaje);
+//     } catch (_) {
+//       if (!mounted) return;
+//       setState(() => _subiendoFoto = false);
+//       _aviso('No se pudo abrir la galería');
+//     }
 //   }
 
 //   // Cierra la sesión, vacía el carrito que se ve en pantalla y vuelve al inicio.
@@ -174,7 +146,14 @@
 //                       bottom: -60,
 //                       left: 0,
 //                       right: 0,
-//                       child: Center(child: _fotoPerfil()),
+//                       child: Center(
+//                         child: FotoPerfilEditable(
+//                           fotoUrl: _fotoUrl,
+//                           rutaPorDefecto: _rutaFoto,
+//                           subiendo: _subiendoFoto,
+//                           onEditar: _cambiarFoto,
+//                         ),
+//                       ),
 //                     ),
 //                   ],
 //                 ),
@@ -194,16 +173,7 @@
 //                             .copyWith(fontWeight: FontWeight.bold, fontFamily: 'serif'),
 //                       ),
 //                       const SizedBox(height: 16),
-//                       _campo('Nombre', Icons.person_outline, _nombre),
-//                       _campo('Correo', Icons.email_outlined, _correo,
-//                           tipo: TextInputType.emailAddress,
-//                           prefijo: Padding(
-//                             padding: const EdgeInsets.all(12),
-//                             child: Image.asset(_rutaGmail, width: 22, height: 22),
-//                           )),
-//                       _campo('Dirección', Icons.home_outlined, _direccion),
-//                       _campo('Teléfono', Icons.phone_outlined, _telefono,
-//                           tipo: TextInputType.phone),
+//                       FormularioPerfil(onUsuario: _usuarioCargado),
 //                       const SizedBox(height: 10),
 //                       SizedBox(
 //                         width: 190,
@@ -267,7 +237,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
   // Lo llama el formulario cada vez que carga los datos del usuario
   void _usuarioCargado(Map<String, dynamic> u) {
     if (!mounted) return;
-    final foto = (u['foto'] ?? '').toString();
+    // La foto propia ('foto') o, si no hay, la de la cuenta de Google ('avatar')
+    final foto = (u['foto'] ?? u['avatar'] ?? '').toString();
     setState(() => _fotoUrl = foto.isEmpty ? null : foto);
   }
 
