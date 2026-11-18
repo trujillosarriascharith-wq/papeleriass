@@ -1,3 +1,4 @@
+
 // import 'package:flutter/material.dart';
 // import 'package:papelerias/widgets/botondegradado.dart';
 // import '../services/auth_service.dart';
@@ -5,69 +6,13 @@
 // import '../theme/estilostextos.dart';
 // import '../widgets/barrasuperior.dart';
 // import '../widgets/fondodegradado.dart';
-// import '../widgets/campodetexto.dart';
 // import '../widgets/BarraInferior.dart';
+// import '../widgets/formulario_perfil.dart';
 // import 'home_screen.dart';
 
 // /// Pantalla de Perfil del administrador
-// class PerfilAdmin extends StatefulWidget {
+// class PerfilAdmin extends StatelessWidget {
 //   const PerfilAdmin({super.key});
-
-//   @override
-//   State<PerfilAdmin> createState() => _PerfilAdminState();
-// }
-
-// class _PerfilAdminState extends State<PerfilAdmin> {
-//   static const _rutaGmail = 'assets/icons/gmail.webp';
-
-//   final _nombre = TextEditingController();
-//   final _correo = TextEditingController();
-//   final _direccion = TextEditingController();
-//   final _telefono = TextEditingController();
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _cargarUsuario();
-//   }
-
-//   Future<void> _cargarUsuario() async {
-//     final u = await AuthService.usuarioGuardado();
-//     if (u == null || !mounted) return;
-//     setState(() {
-//       _nombre.text = u['nombre']?.toString() ?? '';
-//       _correo.text = u['email']?.toString() ?? '';
-//       _direccion.text = u['direccion']?.toString() ?? '';
-//       _telefono.text = u['telefono']?.toString() ?? '';
-//     });
-//   }
-
-//   @override
-//   void dispose() {
-//     _nombre.dispose();
-//     _correo.dispose();
-//     _direccion.dispose();
-//     _telefono.dispose();
-//     super.dispose();
-//   }
-
-//   Widget _campo(String etiqueta, IconData icono, TextEditingController c,
-//       {TextInputType tipo = TextInputType.text, Widget? prefijo}) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 14),
-//       child: CampoTexto(
-//         etiqueta: etiqueta,
-//         icono: icono,
-//         prefijo: prefijo,
-//         bordeColor: AppColors.primaryColor, //borde de los campos
-//         colorIcono: Colors.black,
-//         controller: c,
-//         tipoTeclado: tipo,
-//         iconoFinal: Icons.edit_outlined,
-//         onTapIconoFinal: () {},
-//       ),
-//     );
-//   }
 
 //   // Icono de persona por defecto (sin foto)
 //   Widget _iconoPerfil() {
@@ -152,16 +97,7 @@
 //                             .copyWith(fontWeight: FontWeight.bold, fontFamily: 'serif'),
 //                       ),
 //                       const SizedBox(height: 16),
-//                       _campo('Nombre', Icons.person_outline, _nombre),
-//                       _campo('Correo', Icons.email_outlined, _correo,
-//                           tipo: TextInputType.emailAddress,
-//                           prefijo: Padding(
-//                             padding: const EdgeInsets.all(12),
-//                             child: Image.asset(_rutaGmail, width: 22, height: 22),
-//                           )),
-//                       _campo('Dirección', Icons.home_outlined, _direccion),
-//                       _campo('Teléfono', Icons.phone_outlined, _telefono,
-//                           tipo: TextInputType.phone),
+//                       const FormularioPerfil(),
 //                       const SizedBox(height: 10),
 //                       SizedBox(
 //                         width: 190,
@@ -201,6 +137,7 @@ import '../widgets/barrasuperior.dart';
 import '../widgets/fondodegradado.dart';
 import '../widgets/BarraInferior.dart';
 import '../widgets/formulario_perfil.dart';
+import '../widgets/dialogo_eliminar_perfil.dart';
 import 'home_screen.dart';
 
 /// Pantalla de Perfil del administrador
@@ -307,6 +244,15 @@ class PerfilAdmin extends StatelessWidget {
                               (_) => false,
                             );
                           },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () => eliminarPerfil(context),
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        label: const Text(
+                          'Eliminar perfil',
+                          style: TextStyle(color: Colors.red),
                         ),
                       ),
                     ],

@@ -4,7 +4,9 @@
 // import 'package:http/http.dart' as http;
 // import 'package:shared_preferences/shared_preferences.dart';
 // import 'api_config.dart';
+// import 'google_auth_service.dart';
 // import 'sesion.dart';
+// import 'user_service.dart';
 
 // class AuthResultado {
 //   final bool exito;
@@ -56,6 +58,48 @@
 //           noVerificado: res.statusCode == 403);
 //     } catch (e) {
 //       return AuthResultado(false, 'No se pudo conectar con el servidor');
+//     }
+//   }
+
+//   /// Inicia sesión con Google y deja la sesión guardada igual que el login normal
+//   static Future<AuthResultado> loginConGoogle() async {
+//     try {
+//       final cuenta = await GoogleAuthService.iniciarSesion();
+//       if (cuenta == null) {
+//         return AuthResultado(false, 'Inicio de sesión cancelado');
+//       }
+
+//       final idToken = cuenta.authentication.idToken;
+//       if (idToken == null) {
+//         return AuthResultado(false, 'Google no devolvió el token');
+//       }
+
+//       final data = await UserService().autenticarConGoogleBackend(idToken);
+//       final token = (data['token'] ?? '').toString();
+//       if (token.isEmpty) {
+//         return AuthResultado(false, 'El servidor no devolvió la sesión');
+//       }
+
+//       final usuario =
+//           Map<String, dynamic>.from((data['usuario'] as Map?) ?? {});
+
+//       // Si el servidor no trajo algún dato, se completa con lo que dio Google
+//       bool vacio(String k) => (usuario[k] ?? '').toString().isEmpty;
+//       if (vacio('nombre')) usuario['nombre'] = cuenta.displayName ?? '';
+//       if (vacio('email')) usuario['email'] = cuenta.email;
+//       if (vacio('foto') && cuenta.photoUrl != null) {
+//         usuario['foto'] = cuenta.photoUrl;
+//       }
+
+//       final prefs = await SharedPreferences.getInstance();
+//       await prefs.setString('token', token);
+//       await prefs.setString('usuario', jsonEncode(usuario));
+//       Sesion.token = token;
+
+//       return AuthResultado(true, data['message'] ?? 'Listo', usuario: usuario);
+//     } catch (e) {
+//       return AuthResultado(
+//           false, e.toString().replaceAll('Exception: ', ''));
 //     }
 //   }
 
@@ -137,6 +181,10 @@
 //     await prefs.remove('token');
 //     await prefs.remove('usuario');
 //     Sesion.cerrar();
+//     // Cierra también la cuenta de Google para poder elegir otra la próxima vez
+//     try {
+//       await GoogleAuthService.cerrarSesion();
+//     } catch (_) {}
 //   }
 
 //   // ====================== PERFIL ======================
@@ -339,6 +387,7 @@
 //     }
 //   }
 // }
+
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
@@ -722,6 +771,27 @@ class AuthService {
             usuario: u);
       }
       return AuthResultado(false, data['error'] ?? 'No se pudo subir la foto');
+    } catch (_) {
+      return AuthResultado(false, 'No se pudo conectar con el servidor');
+    }
+  }
+
+  /// Elimina la cuenta del usuario de la base de datos
+  static Future<AuthResultado> eliminarCuenta() async {
+    try {
+      final token = await _token();
+      if (token == null) {
+        return AuthResultado(false, 'Inicia sesión para continuar');
+      }
+
+      final res = await _enviarJson('DELETE', '/api/perfil', {}, token);
+      final data = _mapa(res);
+
+      if (res.statusCode == 200) {
+        return AuthResultado(true, data['message'] ?? 'Cuenta eliminada');
+      }
+      return AuthResultado(
+          false, data['error'] ?? 'No se pudo eliminar la cuenta');
     } catch (_) {
       return AuthResultado(false, 'No se pudo conectar con el servidor');
     }

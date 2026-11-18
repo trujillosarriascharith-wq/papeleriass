@@ -34,7 +34,8 @@
 //   // Lo llama el formulario cada vez que carga los datos del usuario
 //   void _usuarioCargado(Map<String, dynamic> u) {
 //     if (!mounted) return;
-//     final foto = (u['foto'] ?? '').toString();
+//     // La foto propia ('foto') o, si no hay, la de la cuenta de Google ('avatar')
+//     final foto = (u['foto'] ?? u['avatar'] ?? '').toString();
 //     setState(() => _fotoUrl = foto.isEmpty ? null : foto);
 //   }
 
@@ -215,6 +216,7 @@ import '../widgets/fondodegradado.dart';
 import '../widgets/BarraInferior.dart';
 import '../widgets/formulario_perfil.dart';
 import '../widgets/foto_perfil_editable.dart';
+import '../widgets/dialogo_eliminar_perfil.dart';
 import 'carrito_screen.dart';
 import 'contactenos.dart';
 import 'home_screen.dart';
@@ -296,6 +298,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
       (_) => false,
     );
   }
+
+  // Pide confirmación y, si acepta, elimina la cuenta de la base de datos
+  Future<void> _eliminarPerfil() => eliminarPerfil(
+        context,
+        alEliminar: CarritoService.instancia.limpiarLocal,
+      );
 
   // ---------- Navegación de la barra inferior ----------
 
@@ -385,6 +393,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
                           texto: 'Cerrar Sesión',
                           icono: Icons.logout,
                           onPressed: _cerrarSesion,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: _eliminarPerfil,
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        label: const Text(
+                          'Eliminar perfil',
+                          style: TextStyle(color: Colors.red),
                         ),
                       ),
                     ],
