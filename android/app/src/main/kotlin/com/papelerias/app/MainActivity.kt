@@ -1,4 +1,4 @@
-package com.example.papelerias
+package com.papelerias.app
 
 import android.media.MediaScannerConnection
 import android.os.Environment
