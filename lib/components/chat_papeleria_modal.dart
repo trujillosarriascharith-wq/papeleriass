@@ -1,12 +1,19 @@
-//codigo funcionado hoy 11:30
+// //correcto hoy 23
 // import 'package:flutter/material.dart';
+// import '../models/chat_mensaje.dart';
 // import '../services/chatpapeleriaservice.dart';
+// import '../widgets/tarjetastock.dart';
 // import 'chat/chat_header.dart';
 // import 'chat/chat_burbuja.dart';
 // import 'chat/chat_input_field.dart';
+// import 'chat/chat_producto_tarjeta.dart';
 
 // class ChatPapeleriaModal extends StatefulWidget {
-//   const ChatPapeleriaModal({super.key});
+//   /// Solo cambia el aspecto (título y saludo). Los permisos reales de
+//   /// administrador los decide el servidor con el token de sesión.
+//   final bool esAdmin;
+
+//   const ChatPapeleriaModal({super.key, this.esAdmin = false});
 
 //   @override
 //   State<ChatPapeleriaModal> createState() => _ChatPapeleriaModalState();
@@ -15,13 +22,21 @@
 // class _ChatPapeleriaModalState extends State<ChatPapeleriaModal> {
 //   final TextEditingController _controller = TextEditingController();
 //   final ScrollController _scrollController = ScrollController();
-//   final List<Map<String, String>> _mensajes = [
-//     {
-//       'role': 'bot',
-//       'text': '¡Hola! Bienvenido a Papelería Juan Jose. ¿Qué producto, precio o envío te gustaría conocer hoy?',
-//     }
-//   ];
+//   late final List<ChatMensaje> _mensajes;
 //   bool _cargando = false;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _mensajes = [
+//       ChatMensaje(
+//         esUsuario: false,
+//         texto: widget.esAdmin
+//             ? '¡Hola! Puedes preguntarme por productos y precios, o por los productos con poco stock.'
+//             : '¡Hola! Bienvenido a Papelería Juan Jose. ¿Qué producto, precio o envío te gustaría conocer hoy?',
+//       ),
+//     ];
+//   }
 
 //   void _enviarMensaje() async {
 //     final texto = _controller.text.trim();
@@ -29,7 +44,7 @@
 
 //     _controller.clear();
 //     setState(() {
-//       _mensajes.add({'role': 'user', 'text': texto});
+//       _mensajes.add(ChatMensaje(esUsuario: true, texto: texto));
 //       _cargando = true;
 //     });
 
@@ -39,7 +54,14 @@
 
 //     if (mounted) {
 //       setState(() {
-//         _mensajes.add({'role': 'bot', 'text': respuesta});
+//         _mensajes.add(
+//           ChatMensaje(
+//             esUsuario: false,
+//             texto: respuesta.texto,
+//             productos: respuesta.productos,
+//             esStock: respuesta.esStock,
+//           ),
+//         );
 //         _cargando = false;
 //       });
 //       _scrollHaciaAbajo();
@@ -78,7 +100,7 @@
 //       ),
 //       child: Column(
 //         children: [
-//           const ChatHeader(),
+//           ChatHeader(esAdmin: widget.esAdmin),
 //           Expanded(
 //             child: ListView.builder(
 //               controller: _scrollController,
@@ -86,9 +108,19 @@
 //               itemCount: _mensajes.length,
 //               itemBuilder: (context, index) {
 //                 final item = _mensajes[index];
-//                 return ChatBurbuja(
-//                   texto: item['text']!,
-//                   esUsuario: item['role'] == 'user',
+//                 return Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     if (item.texto.isNotEmpty)
+//                       ChatBurbuja(texto: item.texto, esUsuario: item.esUsuario),
+//                     for (final p in item.productos)
+//                       item.esStock
+//                           ? TarjetaStock(
+//                               key: ValueKey('stock_${p.idProducto}'),
+//                               producto: p,
+//                             )
+//                           : ChatProductoTarjeta(producto: p),
+//                   ],
 //                 );
 //               },
 //             ),
@@ -124,6 +156,7 @@
 //     );
 //   }
 // }
+
 import 'package:flutter/material.dart';
 import '../models/chat_mensaje.dart';
 import '../services/chatpapeleriaservice.dart';
@@ -158,7 +191,7 @@ class _ChatPapeleriaModalState extends State<ChatPapeleriaModal> {
         esUsuario: false,
         texto: widget.esAdmin
             ? '¡Hola! Puedes preguntarme por productos y precios, o por los productos con poco stock.'
-            : '¡Hola! Bienvenido a Papelería Juan Jose. ¿Qué producto, precio o envío te gustaría conocer hoy?',
+            : '¡Hola! Bienvenido a Papelería Juan Jose. ¿Qué producto o precio te gustaría conocer hoy? Recuerda que los pedidos se recogen en la papelería 📍',
       ),
     ];
   }
